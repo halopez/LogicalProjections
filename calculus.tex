@@ -1,0 +1,436 @@
+\section{The Global Calculus}\label{Logic4Struct:sec:globalCalc}
+
+The Global Calculus (GC) \cite{CHY:dcm2006,carbone7scc} originates
+from the Web Service Choreography Description Language (WS-CDL)
+\cite{kavantzas2004web}, a description language for web services
+developed by W3C. Terms in GC describe choreographies as interactions
+between participants by means of message exchanges. The description of
+such interactions is centred on the notion of \emph{session}, in
+which two interacting parties first establish a private connection via
+some public channel and then interact through it, possibly interleaved
+with other sessions. More concretely, an interaction between two
+parties starts by the creation of a fresh session identifier, that
+later will be used as a private channel where meaningful interactions
+take place. Each session is fresh and unique, so each communication
+activity will be clearly separated from other interactions. In this
+section, we provide an operational semantics for GC in terms of a
+label transition system (LTS) \cite{plotkin81structural} describing
+how global descriptions evolve, and the type discipline that describes
+the structured sequence of message exchanges between participants from
+\cite{carbone7scc}.
+
+\subsection{Syntax}
+
+Let $\chor, \chor', \ldots$ denote {\em terms} of the calculus, often
+called {\em interactions} or {\em choreographies}; $A, B, C, \ldots$
+range over {\em participants}; $k,k', \ldots$ are {\em linear
+  channels}; $a,b,c,\ldots$ {\em shared channels}; $v,w,\ldots$
+variables; $X,Y,\ldots$ process variables; $l,l_i,\ldots$ labels for
+branching; and finally $e, e', \ldots$ over unspecified arithmetic and
+other first-order expressions. We write $e@A$ to denote that the
+expression $e$ is evaluated using the variable related to participant
+$A$ in the store.
+
+\begin{definition}\label{Logic4Struct:definition:globalCalc}
+  The syntax of the global calculus \cite{CHY:dcm2006} is given by the
+  following grammar:
+  \begin{alignat}{3}
+    \chor ::= \ & \phantom{{}\mid{}}
+    &\ & \INACT                          \label{Logic4Struct:eq:Ginaction} \tag{inaction} \\
+    &\mid && \init{A}{B}{a}{k}\pfx \chor \label{Logic4Struct:eq:Ginit} \tag{init} \\
+    &\mid && \interact{A}{B}{k}{e}{y}\pfx\chor  \label{Logic4Struct:eq:Gcom} \tag{com} \\
+    &\mid && \choice{A}{B}{k}{l}{\chor}   \label{Logic4Struct:eq:Gchoice} \tag{choice} \\
+    &\mid && \chor_1 \pp \chor_2          \label{Logic4Struct:eq:Gpar} \tag{par} \\
+    &\mid && \itn{e@A}{\chor_1}{\chor_2}  \label{Logic4Struct:eq:Gcond} \tag{cond}\\
+    &\mid && X                            \label{Logic4Struct:eq:Grecvar} \tag{recvar} \\
+    &\mid && \mu X\pfx C                  \label{Logic4Struct:eq:Grec} \tag{recursion}
+  \end{alignat}
+\end{definition}
+\NI Intuitively, the term (\ref{Logic4Struct:eq:Ginaction}) denotes a
+system where no interactions take place. (\ref{Logic4Struct:eq:Ginit})
+denotes a session initiation by $A$ via $B$'s service channel $a$,
+with a fresh session channel $k$ and continuation $\chor$. Note that
+$k$ is bound in $\chor$.  (\ref{Logic4Struct:eq:Gcom}) denotes an
+in-session communication of the evaluation (at $A$'s) of the
+expression $e$ over a session channel $k$. In this case, $y$ does not
+bind in $\chor$ (our semantics will treat $y$ as a variable in the
+store of $B$).  (\ref{Logic4Struct:eq:Gchoice}) denotes a labelled
+choice over session channel $k$ and set of labels $I$. In
+(\ref{Logic4Struct:eq:Gpar}), $\chor_1 \pp \chor_2$ denotes the
+parallel product between $\chor_1$ and $\chor_2$.
+(\ref{Logic4Struct:eq:Gcond}) denotes the standard conditional
+operator where $e@A$ indicates that the expression $e$ has to be
+evaluated in the store of participant $A$.  In
+(\ref{Logic4Struct:eq:Grec}), $\mu X\pfx\chor$ is the minimal fix
+point operation for recursion, where the variable $X$ of
+(\ref{Logic4Struct:eq:Grecvar}) is bound in $\chor$.  The free and
+bound session channels, names, and term variables are defined in the
+usual way, and are denoted as $fsc(\chor), bsc(\chor), fn(\chor),
+fv(\chor)$.  
+
+\begin{definition}[Structural congruence in GC]
+GC is equipped with a standard structural
+congruence $\equiv$, defined as the minimal congruence relation on
+interactions $\chor$, such that $\equiv$ is a commutative monoid with
+respect to $\pp$ and $\INACT$, it is closed under alpha equivalence
+$\equiv_\alpha$ of terms, and it is closed under the recursion
+unfolding, i.e., $ \mu X. \chor \equiv \chor \MSUBS{\mu X. \chor}{X}$.
+\end{definition}
+
+\begin{remark}[Differences with the approach in \cite{carbone7scc}]
+  \label{Logic4Struct:remark::one}
+  The syntax in Definition \ref{prelim:definition:globalCalc} presents
+  a simplified version of the global calculus without restriction,
+  summation and local assignments. In its original presentation, restriction is used only during session
+  initiation. We capture the requirement of fresh identifiers by using
+  the operational rules in Figure \ref{Logic4Struct:table:global:semantics}.
+  Excluding the lack of local assignment, we argue that our version of
+  GC is, to some extent, as expressive as the one originally reported
+  in \cite{carbone7scc}.  In particular, the interaction
+  process $\interact{A}{B}{k}{\mathsf{op},e}{y}$  as originally defined
+  captures both selection and message passing which are instead
+  disentangled in our case (mainly for reasons of clarity). The absence
+  of $\mathsf{op}$ in the interaction process
+  $\interact{A}{B}{k}{e}{y}$ can be easily encoded with the existing
+  operators. In fact, $\interact{A}{B}{k}{\mathsf{op},e}{y} \pfx
+  \chor'$ can be decomposed into $\choice{A}{B}{k}{op}{\chor'} \pfx
+  \interact{A}{B}{k}{e}{y} \pfx \chor'$ with unary $I$ (although we
+  lose atomicity).
+\end{remark}
+
+
+
+\subsection{Semantics}
+
+We give the operational semantics in terms of configurations $(\sigma,
+\chor)$, where $\sigma$ represents the state of the system and $\chor$
+the choreography actually being executed. The state $\sigma$ contains
+a set of variables labelled by participants. As described in the
+previous subsection, a variable $x$ located at participant $A$ is
+written as $x@A$.  The same variable name labelled with different
+participant names denotes different variables (hence $\sigma(x@A$) and
+$\sigma(x@B)$ may differ).  Formally, the operational semantics is
+defined as a labelled transition system (LTS). A transition
+$(\sigma,\chor) \action{\ell} (\sigma',\chor')$ says that a
+choreography $\chor$ in a state $\sigma$ executes an action (or label)
+$\ell$ and evolves into $\chor'$ with a new state $\sigma'$. Actions
+are defined as
+$\ell \in \{\initF{A}{B}{a(k)},\comF{A}{B}{k},\branchF{A}{B}{k}{l_i}\}$,
+denoting initiation, in-session communication and branch selection,
+respectively.  We write $(\sigma, \chor) \action{} (\sigma', \chor')$
+when $\ell$ irrelevant, and $\action{}^*$ denotes the transitive
+closure of $\action{}$. The transition relation $\action{}$ is defined
+as the minimum relation on pairs state/interaction satisfying the
+rules in Figure~\ref{Logic4Struct:table:global:semantics}.
+
+\begin{myfigure}{t}
+{\small
+  \begin{align*}
+&\myrule{    G-Init}
+{ h \text{ fresh} } { ({\sigma,\init
+        {A}{B}{a}{k}\pfx \chor}) \action{\initF{A}{B}{a(k)}}
+      ({\sigma,\chor[h/k]}) }
+\quad \myrule{    G-Struct}
+{\chor\equiv \chor'' \quad
+      ({\sigma,\chor}) \action{\ell} ({\sigma', \chor'}) \quad
+      \chor'\equiv \chor'''} {({\sigma,\chor''}) \action{\ell}
+      ({\sigma',\chor'''})}
+   \\&
+\myrule{    G-Choice}
+{}
+    {({\sigma,\choice{A}{B}{k}{l}{\chor}})
+      \action{\branchF{A}{B}{k}{l_i}} ({\sigma,\chor_i})}
+\quad 
+\myrule{    G-Par}
+{({\sigma,\chor_1}) \action{\ell}
+      ({\sigma',\chor_1'})} {({\sigma,\chor_1\pp \chor_2})
+      \action{\ell} ({\sigma',\chor_1'\pp \chor_2})}
+    \\&
+\myrule{    G-IfF}
+{\sigma(e@A)\Downarrow \false \quad
+      (\sigma, \chor_2) \action{\ell} (\sigma', \chor'_2)} { (\sigma,
+      \itn{e@A}{\chor_1}{\chor_2}) \action{\ell}(\sigma',\chor'_2)}
+\quad
+\myrule{    G-IfT}
+{\sigma(e@A)\Downarrow \true \quad
+      (\sigma, \chor_1) \action{\ell} (\sigma', \chor'_1)} { (\sigma,
+      \itn{e@A}{\chor_1}{\chor_2}) \action{\ell} (\sigma', \chor'_1) }
+\end{align*} \vspace{-0.5cm}\begin{align*}
+\myrule{    G-Com}
+{\sigma(e@A)\Downarrow v} {
+      ({\sigma,\interact{A}{B}{k}{e}{x}\pfx \chor})
+      \action{\comF{A}{B}{k}} ({\sigma[x@B \mapsto v],\chor}) }
+ \end{align*}
+}
+  \caption{Operational Semantics for the Global Calculus}
+  \label{Logic4Struct:table:global:semantics}
+\end{myfigure}
+
+Intuitively, transition \Did{G-Init} describes the evolution of a
+session initiation: after $A$ initiates a session with $B$ on service
+channel $a$, $A$ and $B$ share the fresh channel $h$ locally.
+% This will be denoted by a restriction of the session channel $k$
+% over the continuation $C$, as denoted by $\new{k} C$.  The
+% initiation channel $a$ will play an important role for typing and
+% the end-point projection later.
+\Did{G-Com} describes the main interaction rule of the calculus: the
+expression $e$ is evaluated into $v$ in the $A$-portion of the state
+$\sigma$ and then assigned to the variable $x$ located at $B$
+resulting in the new state $\sigma [x@B \mapsto v]$. \Did{G-Choice}
+chooses the evolution of a choreography resulting from a labelled
+choice over a session key $k$. \Did{G-IfT} and \Did{G-IfF} show the
+possible paths that a deterministic evolution of a choreography can
+produce. \Did{G-Par} and \Did{G-Struct} behave as the standard rules
+for parallel product and structural congruence, respectively.
+
+\begin{remark}[Global Parallel]
+  Parallel composition in the global calculus differs from the notion
+  of parallel found in standard concurrency models based on
+  input/output primitives \cite{milner:99:cmspc}. In the latter, a
+  term $P_1\pp P_2$ may allow {\em interactions} between $P_1$ and
+  $P_2$. However, in the global calculus, the parallel composition of
+  two choreographies $\chor_1\pp \chor_2$ concerns two parts of the
+  described system where {\em interactions} may occur in $\chor_1$ and
+  $\chor_2$ but never across the parallel operator $\pp$. This is
+  because an interaction $A\rightarrow B\ldots$ abstracts from the
+  actual end-point behaviour, i.e., how $A$ sends and $B$ receives. In
+  this model, dependencies between two choreographies can be expressed
+  by using variables in the state $\sigma$.
+\end{remark}
+
+In its original presentation \cite{carbone7scc}, GC comes equipped
+with a reduction semantics (presented for completeness in Figure
+\ref{Logic4Struct:table:global:reduction-semantics}).
+% unlike the one presented in Figure
+% \ref{Logic4Struct:table:global:semantics}. 
+Our LTS semantics has the advantage of
+allowing us to observe the changes in the behaviour of the system by
+presenting labels at each point of evolution. This  will
+prove useful when relating to the logical characterisation in Section
+\ref{Logic4Struct:sec:globalLogic}. 
+
+
+\begin{myfigure}{t}
+{\small
+  \begin{align*}
+&\myruleg{G-RInit}
+{ h \text{ is fresh }  } { ({\sigma,\init {A}{B}{a}{k}\pfx \chor})  
+          -->
+      ({\sigma, \chor[h/k]}) }
+\quad \myruleg{G-RStruct}
+{\chor\equiv \chor'' \quad
+      ({\sigma,\chor})  -->  ({\sigma', \chor'}) \quad
+      \chor'\equiv \chor'''} {({\sigma,\chor''})  --> 
+      ({\sigma',\chor'''})}
+   \\[0.3cm]&
+% \myruleg{G-RSum}
+% { (\sigma, \chor_i) --> (\sigma', \chor' ) \quad i \in I}
+%     {(\sigma, \sum_{i \in I} \chor_i)
+%       --> ({\sigma',\chor'})}
+% ~ 
+\qquad \qquad \myruleg{G-RRec}
+{ (\sigma, \chor [\rec X. \chor/\chor]) --> (\sigma', \chor' ) }
+    {(\sigma, \rec X. \chor)
+      --> ({\sigma',\chor'})}
+\qquad 
+\myruleg{G-RPar}
+{({\sigma,\chor_1}) --> 
+      ({\sigma',\chor_1'})} {({\sigma,\chor_1\pp \chor_2})
+       -->  ({\sigma',\chor_1'\pp \chor_2})}
+% ~
+% \myruleg{G-RRes}
+% {({\sigma,\chor}) --> ({\sigma',\chor'})}
+%       {({\sigma, \new{k}\chor})
+%        -->  ({\sigma', \new{k}\chor'})}
+   \\[0.3cm]&
+\myruleg{G-RIfT}
+{\sigma(e@A)\Downarrow \true} { (\sigma,
+      \itn{e@A}{\chor_1}{\chor_2})  --> (\sigma, \chor_1) }
+\quad
+\myruleg{G-RIfF}
+{\sigma(e@A)\Downarrow \false } { (\sigma,
+      \itn{e@A}{\chor_1}{\chor_2})  --> (\sigma,\chor_2)}
+\end{align*} \vspace{-0.5cm}\begin{align*}
+\myruleg{G-RCom}
+{\sigma(e@A)\Downarrow v} {
+      ({\sigma,\interact{A}{B}{k}{\mathsf{op},e}{x}\pfx \chor})
+       -->  ({\sigma[x@B \mapsto v],\chor}) }
+ \end{align*}}
+  \caption{Reduction Semantics for the Global Calculus \cite{carbone7scc}}
+  \label{Logic4Struct:table:global:reduction-semantics}
+\end{myfigure}
+
+
+% We conjecture that our proposed LTS semantics
+% and the reduction semantics of the global calculus originally
+% presented in \cite{carbone7scc} coincide (taking into account the
+% considerations in Remark~\ref{Logic4Struct:remark::one}).
+
+
+
+
+As it is expected, the labelled transition semantics above presented
+and the reduction semantics of the global calculus originally
+presented in \cite{carbone7scc}  coincide (taking into account the
+considerations in Remark~\ref{Logic4Struct:remark::one}).
+
+\begin{lemma} \label{struct:gc-opsem} if $\chor \equiv \chor''$ and
+  $(\sigma,\chor) \action{\ell} (\sigma',\chor')$ then
+  $(\sigma,\chor'') \action{\ell}(\sigma',\chor')$
+  \begin{proof}
+    It follows by induction on the structural congruence rules in
+    $\equiv$ and second induction on the height of the derivation tree
+    for $(\sigma,\chor) \action{\ell} (\sigma',\chor')$.
+  \end{proof}
+\end{lemma}
+
+\begin{proposition}[Reduction and LTS semantics coincide in GC]
+  Given $\chor, \chor'$ processes, $->$ the reduction relation between
+  global calculus processes 
+%  in \cite{carbone7scc}  (Included in
+%   Appendix \ref{Logic4Struct:appendix:GlobalC-Rsemantics})
+  and
+  $\action{\ell}$ the labelled transition relation in Figure
+  \ref{Logic4Struct:table:global:semantics}. We can say that:
+
+\begin{description}
+  \item [Soundness]: If $(\sigma, \chor) -> (\sigma', \chor')$, then
+    $\exists \ell $ s.t. $ (\sigma, \chor) \action{\ell}^*
+    (\sigma', \chor'')$ and $\chor' \equiv \chor''$.
+  \item [Completeness]: For any $\ell$, if $(\sigma, \chor) \action{\ell} (\sigma',
+    \chor')$ then $(\sigma, \chor) -> (\sigma',  \chor')$. 
+\end{description}
+\begin{proof} \hfill
+\begin{description}
+
+\item[On (Soundness):] \hfill \\ 
+The proof proceeds by induction on the height of the derivation tree
+for $(\sigma,\chor) -> (\sigma',\chor')$,
+with a case analysis on the last applied rule. 
+% The proof proceeds by induction on the length of
+% derivation in $->$.
+ \begin{description}
+   \item[Case \Did{RG-Init}]: There must be the case that $\chor =
+     \init{A}{B}{a}{k} \pfx \chor'$ and $(\sigma, \chor) ->(\sigma',
+     %\new{k}
+      \chor')$. One can easily show that for $\chor$ and $\ell=
+     \initF{A}{B}{a(k)}$, $(\sigma, \chor)->(\sigma',\chor')$ which is
+     structurally congruent to $%\new{k} 
+     \chor'$ with fresh $k$ on
+     $\chor'$.
+
+   \item[Case \Did{RG-Comm}:] There must be the case that $\chor =
+     \interact{A}{B}{k}{\mathsf{op}, e}{y} \pfx \chor'$ can be
+     decomposed into $\choice{A}{B}{k}{op}{\chor'} \pfx
+     \interact{A}{B}{k}{e}{y} \pfx \chor'$ (Remark \ref{Logic4Struct:remark::one}),
+     so the reduction of $\chor$ will be given by $(\sigma, \chor) ->
+     ^*(\sigma, \chor')$.
+
+     By \Did{RG-Comm} one get that $(\sigma, \chor )->(\sigma [x@B |->
+     v], \chor' )$, and one can easily show that for such a $\chor$,
+     there is a transition $(\sigma, \chor) \action{\ell} ^* (\sigma,
+     \chor')$, with $\ell$ variable depending on whether $\mathsf{op}$
+     is used or not: 
+     \begin{itemize}
+       \item If $\mathsf{op} \not = \emptyset$, then we know that the behaviour
+         maps to a deterministic choice, therefore $\ell =
+         \branchF{A}{B}{k}{l}$ and $(\sigma,\chor)
+         \action{\ell}(\sigma'', \chor'') $ $\action{\comF{A}{B}{k(x)}} (\sigma' [x@B |->
+     v], \chor')$.
+       \item If $\mathsf{op} = \emptyset$, then we know that the behaviour
+         maps to message passing, therefore $\ell =
+         \comF{A}{B}{k(x)}$ and $(\sigma,\chor)
+         \action{\branchF{A}{B}{k}{l}}(\sigma'', \chor'') $ $\action{\ell} (\sigma' [x@B |->
+     v], \chor')$.
+      \end{itemize}
+    \item[Case \Did{RG-IfT}:] We can assume that for $\chor = \itn{
+        e@A }{ \chor_1 }{ \chor_2 }$ then $\sigma |- e@A \Downarrow
+      \true$ and $(\sigma,\chor) -> (\sigma',\chor_1)$, the converse
+      case is symmetric.
+      
+        From the application of $\Did{G-IfT}$ along with the induction
+        hypothesis $(\sigma,\chor_1)\action{\ell}(\sigma',\chor'_1)$
+        we get that $ (\sigma,\itn{e@A}{\chor_1}{\chor_2}) \action{\ell}
+        (\sigma',\chor'_1)$ which is what we had to show.
+      
+        
+        
+        \item[Case \Did{RG-Par} and \Did{RG-Rec}]: Follows directly
+          by simple rule induction.
+          
+        \item[Case \Did{RG-Struct}:] Given $(\sigma, \chor'') ->
+          (\sigma,\chor''')$ then we can assume that $\chor \equiv
+          \chor''$ and $(\sigma,\chor) -> (\sigma',\chor') \land
+          \chor' \equiv \chor'''$. We need to show that
+          $(\sigma,\chor'') \action{\ell}^* (\sigma,\chor''')$. From
+          Lemma \ref{struct:gc-opsem} and the inductive hypothesis
+          $\chor \equiv \chor'' \land (\sigma,\chor)
+          \action{\ell}^*(\sigma',\chor') \land \chor' \equiv \chor'''$
+          then $(\sigma,\chor'') \action{\ell}^* (\sigma',\chor''')$.
+ \end{description}
+
+
+\item[On (Completeness):] \hfill \\
+The proof proceeds by induction on the height of the derivation tree for $(\sigma,\chor) \action{\ell} (\sigma',\chor')$,
+with a case analysis on the last applied rule. 
+% The proof proceeds by
+% %  rule induction on the
+% %   lenght of the derivations in $\action{\ell}$.
+% case analysis of the labels
+% in $\ell$ over the transitions in $(\sigma,C) \action{\ell}
+% (\sigma',C')$. 
+
+\begin{description}
+  \item[Case $\ell = \initF{A}{B}{a(k)}$:] We have that $(\sigma,
+    \chor) \action{\ell} (\sigma', \chor')$ with $\chor =
+    \init{A}{B}{a}{k} \pfx \chor'$. After the application of
+    $\Did{RF-Init}$ we get that $(\sigma,\chor)->(\sigma,\chor''[h/k])$
+    with fresh $h$, and $\chor''[h/k] \equiv \chor'$, hence we are
+    done.
+    \item[Case $\ell = \comF{A}{B}{k(x)}$:] We have that
+      $(\sigma,\chor) ->(\sigma[x@B \mapsto v], \chor')$ with $\chor =
+      \interact{A}{B}{k}{e}{x} \pfx \chor'$. After the application of
+      $\Did{RG-Comm}$ with $\mathsf{op} = \emptyset$ we get that
+      $(\sigma,\chor)->(\sigma[x@B \mapsto v], \chor')$.
+     \item[Case $\ell = \branchF{A}{B}{k}{l}$:] We have that
+       $(\sigma,\chor)\action{\ell}(\sigma,\chor_i)$ with $\chor =
+       \choice{A}{B}{k}{l}{\chor}$. After the application of
+       $\Did{RG-Comm}$ with $\mathsf{l_i}$ we get that $(\sigma,\chor)
+       ->(\sigma[x@B \mapsto v], \chor_i)$ with $x$ an irrelevant
+       variable in $B$ (extra and not used elsewhere).
+\end{description}
+
+\end{description}
+\end{proof}
+\end{proposition}
+
+
+\begin{example}[Online Booking]\label{Logic4Struct:ex:onlinebooking}
+  We consider the example presented in the introduction, i.e., a
+  simplified version of the on-line booking scenario presented in
+  \cite{LOP-places09}. Here, the customer (Cust) establishes a session
+  with the airline company (AC) using service (on-line booking,
+  shorted as ob) and creating session keys $k_1,k_2$. Once sessions
+  are established, the customer will request the company about a
+  flight offer with his booking data, along the session key $k_1$. The
+  airline company will process the customer request and will send a
+  reply back with an offer using the session key $k_2$. The customer
+  will eventually accept the offer, sending back an acknowledgment to
+  the airline company using $k_1$. The following specification in the
+  global calculus represents the protocol:
+  \begin{align} \label{Logic4Struct:example:syntax} \chor_{\mathsf{OB}} = {} &
+    \init{\text{Cust}}{\text{AC}}{\text{ob}}{k_1,k_2} \pfx
+    \interact{\text{Cust}}{\text{AC}}{k_1}{\text{booking}}{x} \pfx \tag{OB} \\
+    & \interact{\text{AC}}{\text{Cust}}{k_2}{\text{offer}}{y} \pfx
+    \interact{\text{Cust}}{\text{AC}}{k_1}{\text{accept}}{z} \pfx
+    \INACT \notag \, .
+  \end{align}
+\end{example}
+
+\input{LogicalProjection/global-types}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "../Thesis"
+%%% End: 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -1,0 +1,378 @@
+\subsection{End Point Projection}
+\label{Logic4Struct:sec:epp-types}
+
+
+The relation between global and local views at the specification of
+communication protocols is given at the level of types. The central
+idea is that one can \emph{project} the behaviour (type) of a
+global specification given in terms of choreography into a parallel
+composition of the behaviours of end-points. The mapping is far from
+trivial, and needs to preserve causal relations between messages and
+threads, namely \emph{connectedness}, \emph{well-threadedness} and
+\emph{coherence}. The next subsection
+presents a recap from the work at \cite{carbone7scc}. We will use
+these definitions (specially Theorem \ref{Logic4Struct:theorem:epp}
+and Definition \ref{Logic4Struct:definition:pruning}) in order to
+relate the work on end-point projections with their corresponding
+logical counterpart.
+In order to give the formal definition of end point projection, we
+first annotate global specifications with identifiers for threads.
+
+% \begin{definition}[Annotated Interactions]
+  An annotated interaction is an annotation of a choreography with
+  $t$'s denoting each thread in play. Annotated interactions are
+  written $\mathcal{A,A', ...}$, and they are given by
+  the following grammar:
+
+  \begin{align*} 
+    \CAL{A} ::= & ~~~\init{A^{t_1}}{ B ^{t_2}}{a}{k} \pfx \CAL{A}
+    && |~~\CAL{A}_1 |^t \CAL{A}_2 \\
+    & |~~\interact{A^{t_1}}{ B ^{t_2}}{k}{e}{y} \pfx \CAL{A}
+    && |~~\mu^t X^A \pfx \CAL{A}\\
+    & |~~\choice{A^{t_1}}{B ^{t_2}}{k}{l}{\CAL{A}}
+    && |~~ X^A_t \\
+    & |~~\itn{e@A^{t}}{\CAL{A}_1}{\CAL{A}_2}
+    && |~~\INACT
+\end{align*}
+where each $t$ is a natural number. We call $t,t',\cdots$ occurring in
+an annotated interaction, \emph{threads}. Each $\CAL{A}$ can be
+regarded as an abstract syntax built from a constructor in its root
+(either a prefix or a parallel product), if the tree is originated
+from a single thread, or a pair of threads if the interaction involves
+an interaction (session initiation, message communication or
+selection/branching). The following is the consistent annotation of
+(\ref{Logic4Struct:example:syntax}).
+
+
+\begin{align}
+      & \init{\text{Cust}^1}{\text{AC}^2}{\text{ob}}{k_1,k_2} \pfx
+    \interact{\text{Cust}^1}{\text{AC}^2}{k_1}{\text{booking}}{x} \pfx \tag{$OB_{\CAL{A}}$} \\
+     & ~~~~~~\interact{\text{AC}^2}{\text{Cust}^1}{k_2}{\text{offer}}{y} \pfx
+    \interact{\text{Cust}^1}{\text{AC}^2}{k_1}{\text{accept}}{z} \pfx
+    \INACT \notag 
+\end{align}
+
+This annotation, though simple, would become more complicated if there
+more than one session initiation was involved in the choreography.
+ Take for instance the case where
+$\init{\text{Cust}}{\text{AC}}{\text{ob}}{k_1,k_2}$ is decomposed by
+the sequence of processes
+$\init{\text{Cust}}{\text{AC}}{\text{ob}}{k_1}\pfx$ $
+\init{\text{AC}}{\text{Cust}}{\text{ob}}{k_2}$ We can have different
+annotations for Cust and AC. The sequence:
+$\init{\text{Cust}^1}{\text{AC}^2}{\text{ob}}{k_1}\pfx
+\init{\text{AC}^2}{\text{Cust}^3}{\text{ob}}{k_2}$ generates a valid
+annotation as it places each session initiation between the customer
+and the AC in different threads, and any other annotation would be
+invalid.
+% \end{definition}
+
+
+A choreography $\chor$ is \emph{connected}, if in communication
+actions, only the message reception leads to activity (at the
+receiving participant), and that such activity should immediately
+follow the reception of messages. 
+Informally, for each participant $A$ in the set of
+participants of a choreography $\chor$, a communication activity
+originated by $A$ should have been immediately preceeded by a communication
+activity where $A$ had acted as a receiver, or been preceded by a
+self-contained action (evaluation of expressions, for instance).
+
+% With respect to threads, it is convenient to introduce some notation: $t_1$
+%     (resp. $t_2$) is the \emph{active thread} of $\CAL{A}$ by $B$ (resp.
+%     the \emph{passive thread} of $\CAL{B}$ by $C$) if the root of $\CAL{A}$
+%     is initialisation/communication from 
+%     $B$ to $C$ and it is annotated by $(t_1 , t_2 )$. We define
+%     predecessors and successors in annotated interactions as normally
+%     defined in ASTs: A direct predecessor is a predecessor which has no
+%     intermediate predecessor. Symmetrically we define successor and
+%     direct successor. 
+% \begin{definition}[Threads]
+%   \begin{enumerate}
+%   \item If the root of $\CAL{A}$ is initialisation/communication from
+%     $B$ to $C$ and is annotated by $(t_1 , t_2 )$, then $t_1$
+%     (resp. $t_2$) is the active thread of $\CAL{A}$ by $B$ (resp.
+%     the passive thread of $\CAL{B}$ by $C$). If the root of $\CAL{A}$ is
+%     another constructor then its annotation $t$ is both its active
+%     thread and its passive thread.
+%   \item If $\CAL{A'}$ occurs as a proper subtree of $\CAL{A}$, then
+%     (the root of) $\CAL{A}$ is a predecessor of (the root of)
+%     $\CAL{A'}$. A direct predecessor is a predecessor which has no
+%     intermediate predecessor. Symmetrically we define successor and
+%     direct successor. 
+% \end{enumerate}
+% \end{definition}
+
+
+\paragraph{Consistent annotations} In order to provide meaningful
+projections between choreographies and its end-points, we need to
+define a notion of ``consistent annotation'', that is, an annotation
+$\CAL{A}$ such that it respects causality conditions, and can be
+realised by a projection.
+% \begin{definition}[Consistently Annotated Interactions] \label{Logic4Struct:def:cons-annotated-ints}
+%   A well-typed annotated connected interaction (choreography)
+%   $\mathcal{A}$ is consistent if the following conditions hold for
+%   each of its subtrees, say $\mathcal{A'}$:
+Such conditions are: 1) Causal Consistency: if a participant annotated
+with $t$ is passive in an interaction (a receiver), then the
+subsequent interaction will be marked with $t$ as well, or it will be
+a self-contained action, 2) Session Consistency: Two actions in
+$\CAL{A}$ identified by the same session name are annotated with the
+same thread, and 3) Distinctness Condition: The input of session
+initiation is always given a fresh thread.
+
+%   \begin{itemize}
+%   \item[--]Freshness Condition (FC):  If $t$ is by $\mathcal{A}$ at
+%     some node and by $\mathcal{B}$ at another node then $\mathcal{A}$
+%       and $\mathcal{B}$ always coincide. Further, if $\mathcal{A'}$
+%       starts with an initialisation, then its passive thread should be
+%       fresh w.r.t. all of its predecessors (if any).
+%     \item[--]Session Consistency (SC): If $\mathcal{A'}$ starts with a
+%       communication between $\mathcal{B}$ and $\mathcal{C}$ via (say)
+%       $k$ and another subtree $\mathcal{A''}$ of $\mathcal{A}$ starts
+%       with a communication via $k$ or an initialisation which opens
+%       $k$, then the thread by $\mathcal{B}$ (resp. by $\mathcal{C}$)
+%       of $\mathcal{A'}$ should be equal to the thread by $\mathcal{B}$
+%       (resp. by $\mathcal{C}$) of $\mathcal{A''}$.
+%     \item[--]Causal Consistency (CC): If $\mathcal{A''}$ is the direct
+%       successor of $\mathcal{A'}$, then the active thread of
+%       $\mathcal{A''}$ should coincide with the passive thread of
+%       $\mathcal{A'}$.  We also say $\chor$ is well-threaded when there
+%       is a well-formed annotation $\mathcal{A}$ of $\chor$ (i.e. the
+%       result of erasing the annotations from $\mathcal{A}$ coincides
+%       with $\chor$).
+%     \end{itemize}
+%     We also say $\chor$ is well-threaded when there is a well-formed annotation $\mathcal A$ of $\chor$ (i.e.: The result of erasing the annotations from $\mathcal A$ coincides with $\chor$).
+% \end{definition}
+
+
+The \emph{Well-threadedness} condition ensures global specifications
+are free from unrealisable dependencies among actions. We say $\CAL{A}$
+is well-threaded if it is connected and it has a consistent
+annotation. 
+
+
+
+% \begin{definition}[Mergeability]
+\paragraph{Mergeability}
+ Annotations in a choreography allow for the extraction of threads
+ directly from the global behaviour. As threads are 
+ sequences of actions to be executed at each end-point, we need to ensure that
+ threads generated from choreographical annotations are meaningful, in
+ the sense that they project only to the required end-points, and
+ threads describing the behaviour of the same end point are
+ encapsulated (\emph{merged})  on a single service description. 
+  Mergeability, denoted by $\mergeable$, is the smallest equivalence
+  over typed terms up to $\equiv$, closed under all typed contexts and
+
+\begin{align*}
+& \myruleg{M-Sel} 
+   { 
+	\forall i \in (J \cap H). (P_i \mergeable Q_i) \quad \forall j \in J\backslash H. \forall h \in H\backslash J. \mathsf{l}_j \neq \mathsf{l}_h
+    }
+    { \branching{k}{\Sigma_{j \in J} \mathsf{l_j} \pfx P_j}  \mergeable \branching{k}{\Sigma_{h \in H} \mathsf{l_h} \pfx P_h}
+    } \quad 
+%  \myruleg{M-In} 
+%  { 
+% 	x = y \quad P \mergeable Q
+%  }
+%  { \receive{k}{x} P \mergeable \receive{k}{y} Q   }
+ \myruleg{M-Zero} 
+ { 
+	fsc(P) = 0
+ }
+ { P \mergeable \INACT   }
+\end{align*}
+When $P \mergeable Q$, we say that $P$ and $Q$ are mergeable.
+
+% \end{definition}
+
+
+Above, a context is any end-point calculus process with some
+holes. $\Did{M-Sel}$ is for branching and says that we can allow
+differences in branches which do not overlap, but we do demand each
+pair of behaviours with the same operation to be identical.
+
+
+The operation $P \merge Q$ allows for merging typed processes as long
+as they are mergeable according to the rules above. $P \merge Q$ is a
+partial commutative binary operator on typed processes which is
+well-defined iff $P \mergeable Q$. We see an example of the merging
+rules, and the full set can be consulted in Appendix
+\ref{Logic4Struct:appendix:EPP-merging}. The merging of two branching
+processes $\branching{k}{\Sigma_{i \in I} \mathsf{l_i} \pfx P_i} $
+and $\branching{k}{\Sigma_{i \in J}}$ is given as:
+\begin{align*}
+	\branching{k}{\Sigma_{i \in I} \mathsf{l_i} \pfx P_i}\merge \branching{k}{\Sigma_{i \in J} \mathsf{l_i} \pfx Q_i} & \DEFEQ \branching{k}{ \begin{array}{l} \Sigma_{i \in I\cap J} \mathsf{l_i} \pfx P_i \merge Q_i \\ +\Sigma_{i \in I \backslash J} \mathsf{l_i} \pfx P_i  \\ +\Sigma_{i \in  J \backslash I} \mathsf{l_i} \pfx Q_i \end{array}  }
+\end{align*}
+That is, the resulting merge  groups in a single session branching all the
+options coming from multiple branches that have the same session key.
+
+
+
+
+
+Given a consistent annotation, we can project each of its threads onto
+an end-point process. The thread
+projection $\tp{\CAL{A}}{t}$ is a partial operation that uses the
+merge operator, some of the rules are given below (the full set are
+included in Appendix \ref{Logic4Struct:appendix:EPP-thread-proj}):
+
+
+{\small
+\[
+\tp{\init {A^{t_1}}{B^{t_2}}{b}{\tilde k}\pfx\mathcal A}{t}
+    \DEFEQ
+  \quad  \left\{ 
+      \begin{array}{ll}
+        \initOut{b}{\tilde k}\pfx\tp{\mathcal A}{t_1}
+        &         
+        \textrm{if}\ t=t_1\\
+        \repInitIn{b}{\tilde k}\pfx\tp{\mathcal A}{t_2}
+        & 
+        \textrm{if}\ t=t_2\\
+        \tp{\mathcal A}{t}
+        & 
+        \text{otherwise}
+      \end{array}
+    \right.
+\]
+
+\[\tp{\choice {A^{t_1}}{B^{t_2}}{k}{l}{\CAL{A}}}{t}
+    \DEFEQ
+    \quad\left\{ 
+      \begin{array}{ll}
+        \selection {k} {l_i}\tp{\mathcal A_i}{t}
+       &                 \textrm{if}\ t=t_1
+\\
+        \branching k {\sum_i l_i}\pfx\tp{\mathcal A_i}{t}
+        & 
+        \textrm{if}\ t=t_2\\
+        \tp{\mathcal A}{t}
+        & 
+        \text{otherwise}
+      \end{array}
+    \right.
+\]
+
+\[ \tp{\itn{e@A^{t'}}{\mathcal A_1}{\mathcal A_2}}{t}
+    \DEFEQ
+   \quad    \left\{ 
+      \begin{array}{ll}
+        \itn{e}{\tp{\mathcal A_1}{t'}}{\tp{\mathcal A_2}{t'}}
+        &         
+        \textrm{if}\ t=t'\\
+        \tp{\mathcal A_1}{t}\merge\tp{\mathcal A_2}{t}
+        & 
+        \text{otherwise}
+      \end{array}
+    \right.
+\]
+}
+
+
+
+
+
+
+
+
+
+\begin{definition}[Coherent Interactions]
+  Given a well-threaded, consistently annotated interaction $\CAL{A}$,
+  we say that $\CAL{A}$ is coherent if the following two conditions
+  hold:
+  \begin{enumerate}
+    \item For each thread $t$ in $\CAL{A}$, $TP(\CAL{A},t)$ is
+      well-defined. 
+    \item For each pair of threads $t_1,t_2$ in $\CAL{A}$ with
+        $t_1 \equiv_A t_2$, we have $TP(A,t_1) \mergeable
+        TP(\CAL{A}, t_2)$. 
+      \end{enumerate}
+\end{definition}
+
+Below, 
+% we say $\chor$ is restriction-free whenever it contains no
+% terms of the form $\new{a}\chor'$ as its subterm. Additionally, 
+$part(\chor)$ denotes the set of participants names occurring in
+$\chor$. Recall also being coherent entails being well-typed,
+connected and well-threaded.
+
+
+\begin{definition}[End-Point Projection]
+\label{Logic4Struct:def:epp}
+% Let $\chor$ be a coherent interaction such that $\chor\LITEQ \new {\tilde
+%   s}\chor'$ where $\chor'$ is restriction-free. Let $\mathcal A$ be a
+% consistent annotation of $\chor'$.  
+Let $\chor$ be a coherent interaction, and %  such that $\chor\LITEQ \new {\tilde
+%   s}\chor'$
+%  where $\chor$ is restriction-free. 
+ $\mathcal A$ be a
+consistent annotation of $\chor$.  
+% Then the {\em end point projection of
+%   $\CAL{A}$ under a state $\sigma$}, denoted $\epp{\new{\tilde
+%     s}\CAL{A}}{\sigma}$, is given as the following network.
+Then the {\em end point projection of
+  $\CAL{A}$ under a state $\sigma$}, denoted $\epp{\CAL{A}}{\sigma}$, is given as the following network.
+\[
+\epp{\CAL{A}}{\sigma} \DEFEQ
+\Pi_{A \in part(\chor)}\ 
+\pr
+{A}
+{\Pi_{[t]}\bigsqcup_{t'\in[t]}\tp{\mathcal A}{t'}}
+{\sigma@A}
+\]
+\end{definition} 
+
+The mapping given above is defined after choosing a specific
+annotation of an interaction. The following result shows the map in
+fact does not depend on a specific (consistent) annotation chosen, as
+far as a global description has no incomplete threads, i.e. it has no
+free session channels (which is what programmers/designers usually
+produce).
+
+\begin{theorem}[Soundness and Completeness of End-point Projections\cite{carbone7scc}]
+  \label{Logic4Struct:theorem:epp}
+  Assume $\mathcal A$ is well-typed, strongly connected, well-threaded
+  and coherent. Assume further $\typerule{\typeEnv}{}{\mathcal A \ccc
+    \Delta}$ and $\typerule{\typeEnv}{}{\sigma}$. Then the following
+  properties hold: 
+
+\begin{itemize}
+  \item (soundness) if $\epp{\mathcal{A}}{\sigma}\action{}  \network$
+    then there exists $\mathcal A'$ such that $(\sigma, \mathcal{A}) \action{}
+(\sigma', \mathcal{A'})$ such that $\epp{\mathcal{A'}}{\sigma'} \prune \equiv_{rec} \network$.
+
+ \item (completeness) If $(\sigma, \mathcal{A}) \action{}  (\sigma', \mathcal{A'})$ then there exist $\network$ such
+   that $\epp{\mathcal{A}}{\sigma} \action{} \network$ and $\epp{\mathcal{A'}}{\sigma'} \prune \network$.
+
+  \item (soundness with action labels) if $\epp{\mathcal{A}}{\sigma}\action{\emm}  \network$
+    then there exists $\mathcal A'$ such that $(\sigma, \mathcal{A}) \action{\ell}
+(\sigma', \mathcal{A'})$ such that $\epp{\mathcal{A'}}{\sigma'} \prune \equiv_{rec} \network$.
+
+ \item (completeness with action labels) If $(\sigma, \mathcal{A}) \action{\ell}  (\sigma', \mathcal{A'})$ then there exist $\network$ such
+   that $\epp{\mathcal{A}}{\sigma} \action{\emm} \network$ and $\epp{\mathcal{A'}}{\sigma'} \prune \network$.
+
+\end{itemize}
+\end{theorem}
+
+Where $\equiv_{rec}$ denotes equality induced by the unfolding of
+process recursion. The asymmetric relation $P \prune Q$ indicates that $P$ is the result
+of cutting off ``unnecessary branches'' of $Q$, in the light of P's
+own typing, is formally defined as follows:
+
+
+\begin{definition}[Pruning]\label{Logic4Struct:definition:pruning}
+ Let $\typeEnv |-_{A} P |> \Delta$ for $\typeEnv$ and $\Delta$
+minimal and $\typeEnv, \typeEnv' |-_{A} Q |> \Delta$. If further we
+have $Q \equiv Q_0 \pp !R$ where $\typeEnv |- Q_0 |> \Delta$, $\typeEnv'
+|-_{A} R |> \Delta$ and $P \mergeable Q_0$, then we can write: $\typeEnv |-_A P \prune Q |>
+\Delta$ or $P \prune Q$ for short, and say $P$
+prunes $Q$ under $\typeEnv; \Delta$. $\prune$ is extended to networks accordingly.
+\end{definition}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "../Thesis"
+%%% End: 

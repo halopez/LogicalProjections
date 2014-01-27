@@ -1,0 +1,398 @@
+% \newtheoremstyle{theorem}% ?name? 
+% {\topsep}% <Space above>
+% {\topsep}% <Space below>
+% {\it}% <Body font>
+% {}% <Indent amount>
+% {\bfseries}% <Theorem head font>
+% {.}% <Punctuation after theorem head>
+% {0.5em}% <Space after theorem head>
+% {\thmname{#1}\thmnumber{ #2}\thmnote{ (#3)}}% 
+% 	%<Theorem head spec (can be left empty, meaning normal)>
+
+% \newtheoremstyle{example}% ?name? 
+% {}% <Space above>
+% {}% <Space below>
+% {\rm}% <Body font>
+% {}% <Indent amount>
+% {\bfseries}% <Theorem head font>
+% {.}% <Punctuation after theorem head>
+% {0.5em}% <Space after theorem head>
+% {\thmname{#1}\thmnumber{ #2}\thmnote{ (#3)}}% 
+% 	%<Theorem head spec (can be left empty, meaning normal)>
+
+% \theoremstyle{theorem} %% style
+% \newtheorem{theorem}{Theorem}[section]
+% \newtheorem{definition}[theorem]{Definition}
+% \newtheorem{proposition}[theorem]{Proposition}
+% \newtheorem{lemma}[theorem]{Lemma}
+
+% \theoremstyle{example} %% style
+% \newtheorem{example}[theorem]{Example}
+% \newtheorem{remark}[theorem]{Remark}
+% \newtheorem{assumption}[theorem]{Assumption}
+\newtheorem{notation}[theorem]{Notation}
+
+% \newtheorem{definition}{Definition}
+% \newtheorem{theorem}{Theorem}
+% \newtheorem{proposition}{Proposition}
+% \newtheorem{example}{Example}
+% \newtheorem{lemma}{Lemma}
+\newtheorem{assumption}{Assumption}
+% \renewcommand{\thetheorem}{\thesection.\arabic{theorem}}
+% \renewcommand{\thedefinition}{\thesection.\arabic{definition}}
+% \renewcommand{\thelemma}{\thesection.\arabic{theorem}}
+% \renewcommand{\theexample}{\thesection.\arabic{example}}
+% \renewcommand{\theremark}{\thesection.\arabic{remark}}
+
+\def\signature{\ensuremath{\Sigma}}
+\def\decTheory{\ensuremath{\Delta}}
+\def\typeEnv{\ensuremath{\Gamma}}
+\def\satisfies{\ensuremath{\Vdash}}
+\def\network{\ensuremath{N}}
+\def\Nat{{\mathbb N}} 
+\def\Real{{\mathbb R}} 
+\def\true{\mathtt{tt}} 
+\def\false{\mathtt{ff}} 
+\def\keySet{\mathsf{K}}
+\def\sep{-\hspace{-0.2cm}\ensuremath{\ast}}
+\def\wand{-\hspace{-0.13cm}\ensuremath{\ast}}
+\def\defSym{ \stackrel{\textup{\texttt{def}}}{\iff} }
+\def\nextOp{\ensuremath{\circ}}
+\def\emm{\ensuremath{\mathsf{m}}}
+\def\LITEQ{\ensuremath{\equiv}}
+\def\converges{\Downarrow}
+\mathlig{|->}{\mapsto}
+\mathlig{-->}{\longrightarrow}
+\mathlig{->}{\rightarrow}
+\mathlig{=>}{\Rightarrow}
+\mathlig{==>}{\Longrightarrow}
+\mathlig{||-}{\Vdash}
+\mathlig{|-}{\vdash}
+\mathlig{|=}{\models}
+\mathlig{||}{\parallel}
+% \mathlig{[|}{[\mkern-3mu[}
+% \mathlig{|]}{]\mkern-3mu]}
+\mathlig{[|}{[\![}
+\mathlig{|]}{]\!]}
+\mathlig{[]}{\Box}
+\mathlig{<<>>}{\diamondsuit}
+\mathlig{<=io}{\leq_{io}}
+\mathlig{|>}{\rhd}
+\mathlig{<|}{\lhd}
+\mathlig{<.}{\langle}
+\mathlig{.>}{\rangle}
+
+
+%\newcommand{\defSym}{\ensuremath{\stackrel{\textup{\texttt{def}}}  {=}}} 
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%               Language Notation                     %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\mipi}{\ensuremath{\pi}}
+\newcommand{\tcc}{\ensuremath{\mathtt{tcc}}\xspace} 
+\newcommand{\utcc}{\ensuremath{\mathtt{utcc}}\xspace} 
+%\newcommand{\tutcc}{\ensuremath{\mathtt{secure} \, \utcc \, }} 
+\newcommand{\tutcc}{\ensuremath{\mathtt{utcc}_s}~} 
+\newcommand{\lysa}{L{\footnotesize  Y}S{\footnotesize  A}$^{NS}$\xspace}
+\newcommand{\sccpplus}{\ensuremath{\mathsf{SPCCP} ~ }}
+\newcommand{\sccp}{\ensuremath{\mathsf{SCCP} ~ \xspace}}
+\newcommand{\SCP}{{{\sf SCP}}}
+\newcommand{\GL}{\ensuremath{\mathcal{GL}} \xspace}
+\newcommand{\LL}{\ensuremath{\mathcal{LL}}\xspace}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%              Behavioural Equivalences           %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\secEq}{\ensuremath{\thicksim_{sec}}}
+\newcommand{\ioEq}{\ensuremath{\thicksim_{io}}}
+\newcommand{\outputs}{\ensuremath{\Downarrow} \xspace}
+\newcommand{\discloses}{\ensuremath{\downarrow} \xspace}
+\newcommand{\todo}[1]{\emph{#1}}
+\newcommand{\hide}[1]{}
+\newcommand{\psp}[1]{\ensuremath{(\Omega_{#1},\mc{F}_{#1},P_{#1})}} 
+\def\midd{\; \; \mbox{\Large{$\mid$}}\;\;}
+\newcommand{\toCheck}[1]{\textcolor{red}{#1}}
+\newcommand{\Guarded}{\cG} 
+
+
+
+
+\newcommand{\constraint}[1]{\ensuremath{\mathsf{#1}}}
+\newcommand{\mc}[1]{\ensuremath{\mathcal{#1}}}
+\newcommand{\newinvs}[3]{\frac{#1}{{ #2}} #3} 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% SOS Rules
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%Transition, Entailment and Typing rules: Receive #1 Antecedent, #3 Consequent, and #3 Parametrical model 
+\newcommand{\justrule}[5]{\conf{#1}{#2}  \longrightarrow_{#4} \conf{#5}{#3} }
+\newcommand{\entailrule}[3]{ \constraint{#1}   \satisfies_{#2}  \constraint{#3}  }
+\newcommand{\typerule}[3]{ #1 \vdash_{#2}  #3  }
+\newcommand{\pipa}{$\pi_{pa}\ $} 
+
+% derivations from internal transitions: gets a formula (1) y and its side name (2) 
+\newcommand{\intt}[2]{\overline{#1}\put(7,4){\textsf{#2}}} 
+ 
+% observable transitions: gets an initial store  (1), a final store (2) and the  probability (3) 
+%%%\newcommand{\obst}[3]{\put(0.1,0){=}=\stackrel{(#1, #2, #3)}{\put(3,3.4){\line(1,0){40}} \put(3,1.4){\line(1,0){40}}%\quad\quad\quad\ 
+\newcommand{\obst}[3]{\stackrel{~(#1, #2, #3)~}{\put(4.7,0){===}=== \Longrightarrow}}%\quad\quad\quad\ 
+\newcommand{\obsta}[2]{\stackrel{(#1, #2)}{\put(7.1,0){===}== \Longrightarrow}}%\quad\quad\quad\ 
+\newcommand{\obstanada}{{\put(7.1,0){===}== \Longrightarrow}}%\quad\quad\quad\ \
+\newcommand{\labeltransition}[1]{\stackrel{#1}{-->}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  tcc process commands
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\tell}[1]{\ensuremath{\mathbf{tell}\,(\mathsf{#1})}\xspace} 
+\newcommand{\sskip}{\ensuremath{\mathbf{skip}}\xspace} 
+\newcommand{\when}[2]{\ensuremath{\mathbf{when}\ \mathsf{#1}\, \mathbf{do}\, #2} \xspace} 
+\newcommand{\nnext}[1]{\ensuremath{\mathbf{next}\,(#1)\xspace}}
+\newcommand{\nextn}[2]{\ensuremath{\mathbf{next}^{#1}\,(#2)\xspace}}
+\newcommand{\localn}[3]{\ensuremath{(\mathbf{local}~{#1}; \constraint{#2})~#3}\xspace} 
+\newcommand{\localtrue}[2]{\ensuremath{(\mathbf{local}~{#1})~#2}\xspace} 
+\newcommand{\unlessn}[2]{\ensuremath{\mathbf{unless}\, \mathsf{#1}\,
+    \mathbf{next\,} #2}\xspace}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%utcc process commands
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\absn}[3]{\ensuremath{(\mathbf{\lambda}~{#1};\constraint{#2})~#3}\xspace}
+ \newcommand{\defp}[2]{#1 \defSym #2}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%SCCP process commands
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\nil}{\ensuremath{\mathbf{nil}}\xspace} 
+\newcommand{\enc}[2]{\ensuremath{\{ #1 \}_{#2}}\xspace}
+\newcommand{\newSCCP}[2]{\ensuremath{\mathbf{new}(#1)\, #2}\xspace}
+\newcommand{\out}[2]{\ensuremath{\mathbf{out}(#1).\, #2} \xspace}
+%\newcommand{\inp}[3]{\ensuremath{\mathbf{in}_{\forall}[#1 \, > \,#2].#3} \xspace}
+%\newcommand{\inpR}[4]{\ensuremath{\mathbf{in}_{\forall}
+%[#1 \, > \,#2]_{#3}.#4} \xspace}
+\newcommand{\inp}[3]{\ensuremath{\mathbf{in}_{\forall}#1[#2].#3} \xspace}
+\newcommand{\inpR}[4]{\ensuremath{\mathbf{in}_{\forall}#1
+[#2]_{#3}.#4} \xspace}
+
+
+% Configuration 
+\newcommand{\conf}[2]{\langle #1,\constraint{#2} \rangle} 
+ 
+%Rule generator command: gets rule name (1), antecedent (2) y consequent (3) -- used inside a table
+% \newcommand{\myrule}[3]{\mathsf{~~#1}\ & {\displaystyle
+% \frac{#2}{#3}}}
+\newcommand{\myrule}[3]{\begin{matrix}[r] 
+%    {\displaystyle \frac{#2}{#3}} \\[2.5mm]\mathsf{~~#1} \end{matrix}} 
+     \scriptsize{\mathsf{~~~#1}}\\~~{\displaystyle \frac{#2}{#3}} \end{matrix}} 
+
+\newcommand{\myruleg}[3]{\begin{matrix}[r] 
+%    {\displaystyle \frac{#2}{#3}} \\\mathsf{~~#1} \end{matrix}} 
+     \scriptsize{\mathsf{~~~#1}}\\~~{\displaystyle \frac{#2}{#3}} \end{matrix}} 
+
+%General Rule generator command: gets rule name (1), antecedent (2) y consequent (3) 
+% \newcommand{\myruleg}[3]{\mathsf{~~#1}\  {\displaystyle \frac{#2}{#3}}}
+
+
+%Rule generator for single inferences: gets the inference name (1), antecedent (2) and consequent (3)
+\newcommand{\inferenceg}[3]{  {\displaystyle \frac{#2}{#3}}  \mathsf{~#1}} 
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Encodings 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\encod}[2]{\os #1 \cs_{#2}}
+
+\def\finish#1 {\vskip.2cm\noindent{\em \textsl{#1}}%
+   \marginpar{$\longleftarrow$}\vskip.2cm}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                          Logic for Choreography: Macros                                                                                                        %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%% COMMENTS
+\let\olds\oldstylenums
+\def\mnote#1{\stepcounter{ncomm}%
+\vbox to0pt{\vss\llap{\footnotesize\oldstylenums{\arabic{ncomm}}}\vskip6pt}%
+\marginpar{\tiny\bfseries\raggedright%
+{\oldstylenums{\arabic{ncomm}}}.\hskip0.5em#1}}
+\newcounter{ncomm}
+\let\mcomment\mnote
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Calculi
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\pp}{\ \boldsymbol{|}\ }
+\newcommand{\pfx}{\boldsymbol{.}\ }
+\newcommand{\new}[1]{(\mathbf\nu#1)\;}
+\newcommand{\ifthenelse}[3]{\mathbf{if}\ #1\ \mathbf{then}\ #2\ \mathbf{else}\ #3}
+\newcommand{\INACT}{\boldsymbol{0}}
+\newcommand{\participants}[1]{\mathcal{#1}\ }
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Global Calculus
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\chor}{\mathcal C}
+\newcommand{\init}[4]{#1\boldsymbol\rightarrow #2\boldsymbol:#3\boldsymbol(#4\boldsymbol)}
+\newcommand{\interact}[5]{#1\boldsymbol\rightarrow #2:#3\boldsymbol\langle#4,#5\boldsymbol\rangle}
+\newcommand{\choice}[5]{#1\boldsymbol\rightarrow#2\boldsymbol:#3\boldsymbol[#4_i:#5_i\boldsymbol]_{i\in I}}
+\newcommand{\atomic}[2]{\mathbf{atomic}\boldsymbol\{#1\boldsymbol\}\pfx #2}
+\newcommand{\runatomic}[5]{\{\![(#1)_{#2}]\!\}^{#3}_{#4}\pfx #5}
+\newcommand{\action}[1]{\stackrel{#1}{-\hspace{-0.2cm}-->}} 
+%\newcommand{\action}[1]{=>^{#1}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Global Calculus: typing
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\endT{\ensuremath{\mathtt{end}}}
+\newcommand{\IncLEQ}{\Subset}
+\newcommand{\inactT}{\mathtt{end}}
+\newcommand{\fsc}[1]{\mathsf{fsc}(#1)}
+\newcommand{\fv}[1]{\mathsf{fv}(#1)}
+\newcommand{\bsc}[1]{\mathsf{bsc}(#1)}
+\newcommand{\bv}[1]{\mathsf{bv}(#1)}
+\newcommand{\tv}[1]{\mathsf{tv}(#1)}
+\newcommand{\newvarS}{\mathtt{newvar}\ }
+\newcommand{\conforms}{\succ_{\mathsf{c}}}
+ \newcommand{\IFFDEF}{\stackrel{\mbox{\scriptsize def}}{\ \LITEQ \ }}
+\newcommand{\ENCan}[1]{\langle #1 \rangle}
+ \newcommand{\OL}{\overline}  % disjoint sum
+ \newcommand{\CAL}[1]{\mathcal{#1}}
+ \newcommand{\ASET}[1]{\{#1\}}
+\newcommand{\ccc}{\triangleright}
+\newcommand{\proves}{\vdash}
+\newcommand{\tproves}[3]{#1\:\proves\:#2\:\ccc\:#3}
+\newcommand{\tprovess}[2]{#1\:\proves\:#2}
+\newcommand{\tprovesAmin}[3]{#1\:\proves_A^{\star}\,#2\:\rhd\:#3} 
+\newcommand{\tprovesmin}[3]{#1\:\proves^{\star}\:#2\:\rhd\:#3} 
+\newcommand{\tprovesA}[3]{#1\:\proves_A\,#2\:\ccc\:#3} 
+\newcommand{\RED}{\to}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% End-Point Calculus
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\COH}{\asymp}
+\newcommand{\pr}[3]{#1\boldsymbol[\,#2\,\boldsymbol]_{#3}}
+\newcommand{\repInitIn}[2]{\boldsymbol!\,#1(#2)}
+\newcommand{\initOut}[2]{\overline{#1}\langle #2 \rangle}
+\newcommand{\inputP}[2]{#1\boldsymbol ?({#2})}             %% input prefix
+\newcommand{\outputP}[2]{\ol{#1}\boldsymbol !\langle #2\rangle} %% output prefix 
+\newcommand{\inputBranch}[5]{#1\rhd\Sigma_{#2}\mathsf{#3}_{#2}(#4_{#2})\pfx #5_{#2}}
+\newcommand{\INACTNW}{\mathord{\boldsymbol{\epsilon}}}
+\newcommand{\lock}[1]{\mathbf{lock}(#1)}
+\newcommand{\unlock}[1]{\mathbf{unlock}(#1)}
+\newcommand{\IFTHENELSE}[3]{\mathtt{if\ }\ #1\ \mathtt{\ then\ }\ #2\
+  \mathtt{\ else\ }\ #3}
+\newcommand{\rec}{\mu}
+\newcommand{\request}[2]{\ensuremath{\mathbf{request } \; #1(#2) \; \mathbf{in } \;}\xspace}
+\newcommand{\accept}[2]{\ensuremath{\mathbf{accept }\; #1(#2) \; \mathbf{in } \; }\xspace}
+\newcommand{\send}[2]{\ensuremath{#1! \langle #2 \rangle \pfx }\xspace}
+\newcommand{\receive}[2]{\ensuremath{#1?( #2 ) \, \pfx }\xspace}
+\newcommand{\selection}[2]{\ensuremath{#1 \lhd #2 \pfx \xspace}}
+\newcommand{\branching}[2]{\ensuremath{#1 \rhd  #2 }\xspace} %Trailing parenthesis required
+\newcommand{\itn}[3]{\ensuremath{\mathbf{if}\, #1 \, \mathbf{then } \, #2 \, \mathbf{else} \, #3 \,}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% General Mathematical Macros
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\Rule}[2]{\displaystyle{\frac{\ensuremath{#1}}{\ensuremath{#2}}}}
+%\newcommand{\true}{\mathbf{tt}}
+%\newcommand{\false}{\mathbf{ff}}
+\newcommand{\MSUBS}[2]{[#1/#2]}
+\newcommand{\DEFEQ}{\stackrel{\mbox{\scriptsize def}}{=}}  
+\newcommand{\VEC}[1]{\tilde #1}
+ \newcommand{\NUL}{\varepsilon}                      
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% End-Point Projection Stuff
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\TOP}[1]{\mathsf{top}(#1)}
+\newcommand{\triple}[3]{\langle #1,#2,#3\rangle}
+\newcommand{\annNull}{\gamma}
+\newcommand{\ann}[2]{\annNull(#2,#1)}
+\newcommand{\mergeable}{\bowtie}
+\newcommand{\DIF}{\!\setminus\!}
+\newcommand{\merge}{\sqcup}
+\newcommand{\tp}[2]{{\mathsf{TP}}(#1,#2)}
+\newcommand{\seek}[2]{{\mathsf{threads}}(#1,#2)}
+\newcommand{\seekNull}{{\mathsf{threads}}}
+\newcommand{\epp}[2]{{\mathsf{EPP}}(#1,#2)}
+\newcommand{\pruneLEQ}{\mathbf{\prune}}
+\newcommand{\prune}{\ \prec\ }
+\newcommand{\con}{\mathsf{Con}}
+\newcommand{\activeT}{\mathsf{activeT}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Text macros
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\NI}{\noindent}
+\newcommand{\Did}[1]{(\textsc{#1})}
+\newcommand{\ol}{\overline}
+
+
+%% Comments
+%\newcommand{\mc}[1]{{\color{orange}{#1}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Global Logic
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\may}{<<>>}
+\newcommand{\actionF}[1]{\langle #1 \rangle}
+\newcommand{\initF}[3]{\textsf{init } #1 \rightarrow #2 \textsf{ on }#3}
+\newcommand{\comF}[3]{\textsf{com } #1 \rightarrow #2 \textsf{ over }#3}
+\newcommand{\branchF}[4]{\textsf{sel } #1 \rightarrow #2 \textsf{ over }#3:#4}
+\newcommand{\barb}[1]{\ensuremath{\downarrow_{#1}}}
+\newcommand{\tauBarb}{\ensuremath{\downarrow_{\tau}}}
+\newcommand{\logicEquiv}{\ensuremath{\equiv_{|=}}}
+\newcommand{\var}{t}
+\newcommand{\parts}{\textsf{parts}}
+\newcommand{\fn}{\textsf{fn}}
+\newcommand{\op}{\textsf{op}}
+\def\endF{\ensuremath{\mathsf{end}}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Assertion Semantics
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\sem}[1]{\{\!\![\:#1\:]\!\!\}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Local Logic
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\locatedActionF}[2]{ #1 [ #2 ]}
+\newcommand{\asynchServiceOutF}[2]{#1\uparrow #2}
+\newcommand{\asynchServiceInputF}[2]{#1\downarrow #2}
+\newcommand{\asynchOutputF}[2]{#1 !\langle #2 \rangle }
+\newcommand{\asynchInputF}[2]{#1? (#2)}
+\newcommand{\asynchBranch}[2]{#1 |> \mathsf{#2}}
+\newcommand{\asynchSelection}[2]{#1 <| \mathsf{#2}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Logical Projection
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\project}[1]{\{\![ #1 ]\!\}_{EPP}}
+
+
+
+\newcommand{\transform}[3]{[\![ #1 ]\!]_{#2}^{#3}}
+
+
+
+
+\makeatletter
+\renewcommand*\env@matrix[1][c]{\hskip -\arraycolsep
+  \let\@ifnextchar\new@ifnextchar
+  \array{*\c@MaxMatrixCols #1}}
+\makeatother
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "main"
+%%% End: 

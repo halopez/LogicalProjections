@@ -1,0 +1,785 @@
+\section{\texorpdfstring{\LL:}{LL:}  A logic for End Points}
+\label{Logic4Struct:sec:localLogic}
+% \subsection{Syntax}
+In this section, we introduce a simple logic for
+orchestrations. Having close resemblance with the global logic,
+$\mathcal{LL}$ expresses properties of end-points processes at the
+\emph{local level}.  This is possible by presenting a logic featuring
+assertions for modalities for locations
+\cite{Cardelli2006Ambient-Logic}, equality, value/name
+passing and  
+ spatial operators \cite{caires2001spatial}
+%  and nonce creation.
+% It is inspired by the modal logic for session types presented in
+% \cite{Berger2008Completeness-an}.  
+%fixed point formulas  and.  
+The grammar of assertions is given in Figure
+\ref{Logic4Struct:table:LocalLogic}.
+\begin{myfigure}{t}
+$$
+\begin{array}{cc}
+
+ \begin{array}{rll}
+    \psi, \omega \ ::=\ &\phantom{{}~ | ~{}}
+%     \true 	& \text{(true)} \\
+\locatedActionF{A}{\emm}\pfx \psi      & \text{(Located action)}\\
+    &~ | ~ (e_1=e_2)@A    & \text{(equality)}\\
+    &~ | ~ \psi \land \omega               & \text{(conjunction)}\\
+    &~ | ~ \neg \psi                 & \text{(neg)}\\
+%     &~ | ~  \psi => \omega                 & \text{(implication)}\\
+    &~ | ~ \exists \var\pfx \psi     & \text{(exists)}\\
+    &~ | ~ \may \psi                  & \text{(may)}\\
+%        &~ | ~ \mu X\pfx \phi             & \text{(rec)}\\
+%        &~ | ~ X                      & \text{(recVar)}\\
+%     &~ | ~ \new{ x} \pfx \psi         & \text{(new)}\\
+    &~ | ~ \psi ~|~ \omega                    & \text{(parallel)}\\
+%     &~ | ~ \psi \wand \omega               & \text{(wand)}\\
+    &~ | ~ \endF               & \text{(inaction)}
+% \end{array}
+% \begin{array}{rll}
+\\\\
+    \emm\ ::=\ & \phantom{{}~ | ~{}} \asynchServiceInputF{a}{k}&
+    \text{(Service Init Input)}\\
+    &~ | ~ \asynchServiceOutF{a}{k}&    \text{(Service Init Output)}\\
+    &~ | ~ \asynchInputF{k}{x}&    \text{(Input)}\\
+    &~ | ~ \asynchOutputF{k}{x}&    \text{(Output)}\\
+    &~ | ~ \asynchBranch{k}{l}&    \text{(Branching)}\\
+    &~ | ~ \asynchSelection{k}{l}&    \text{(Selection)}\\
+%     &~ | ~  m \oplus m &    \text{(Internal choice)}\\
+%     &~ | ~ \tau& \text{(Synch)}
+       \end{array}
+\end{array}
+$$
+\caption{Syntax of  \LL }
+\label{Logic4Struct:table:LocalLogic}
+\end{myfigure}
+
+
+The logic consists of the standard FOL operators $\land$, $\lnot$,
+and the existential quantifier $\exists$. In
+$\exists\var\pfx\psi$, the variable $\var$ is meant to range over
+service and session channels and participants.  Accordingly, it works
+as a binder in $\psi$.  In addition to the standard operators, we
+include an unspecified (decidable) equality on expressions
+$(e_1=e_2)$.  Our operators depend on the labels of the labelled
+transition system of the end point calculus: $\locatedActionF{A}{\emm}
+\pfx \psi $ represents the execution of an action $\emm$ located at
+participant $A$, followed by the assertion $\psi$ execution of a
+labelled action $\emm$ followed by the assertion $\psi $; $\nextOp
+\psi$ and $\may \psi$ denote the standard next and eventually
+operators from Linear Temporal Logic.  The spatial operator in $\psi |
+\chi$ denotes composition of formulae where $\psi$ and $\chi$ do not
+share variables, 
+% Similarly,  $\psi \wand \chi$ denotes the
+%adjoint operation for $|$ and is used to describe the  contribution of
+%the context in the logic, 
+as we can see in the definition of its
+semantics below.
+
+\begin{remark}[Derived Operators]
+  We can get the full set of operators in \LL by standard derivation
+  from the above presented set of operations:
+
+  \begin{alignat*}{3}
+    \true & = (0 = 0) &\qquad\qquad
+    \false  & = (0 = 1) &\qquad
+    (e_1 \neq e_2)  & = \neg (e_1 = e_2) \\
+    \nextOp \psi & = \exists \ell \pfx \exists A \pfx
+    \locatedActionF{A}{\emm} \pfx \psi  &
+   \psi \land \omega  & = \lnot ( \lnot \psi  \lor \lnot \omega) &
+    \forall x \pfx \psi   & = \neg \exists x  \pfx \lnot \omega \\
+%     \phi => \chi & = \lnot \phi \lor \chi \\
+    [] \psi   & = \lnot <<>> \neg \psi &
+    [\locatedActionF{A}{\emm}] \pfx \psi & = \neg
+    \locatedActionF{A}{\emm} \pfx \neg \psi &
+    \psi => \omega & = \lnot \psi \lor \omega 
+   % (\nu X(\vec{x})\pfx \phi ) & = \neg (\mu X\pfx \neg \phi )
+  \end{alignat*}
+\end{remark}
+
+
+\subsection{Examples of formulae in \texorpdfstring{\LL}{LL}}
+
+\paragraph{Request - Reply}
+
+For a classical request-reply system in the End Point Calculus: 
+\begin{align*}
+P ~&::=  \repInitIn {p}{k_1,k_2}\pfx \send{k_1}{e_1} 
+\receive{k_2}{y} \INACT \\
+B ~&::=  \initOut{p}{k_1,k_2} \pfx \receive{k_1}{x} 
+\send{k_2}{e_2} \INACT \\
+System ~&::=  A[P]_\sigma \pp B[Q]_{\delta}
+\end{align*}
+
+We can describe some of the \LL formulae that hold for the above
+system. At the participant level, we can describe a formula enforcing
+an eventual response after a given message exchange:
+
+\begin{align*}
+System &|= \locatedActionF{A}{\asynchServiceOutF{a}{(k_1,k_2)}} \pfx
+\locatedActionF{A}{\asynchOutputF{k_1}{e_1}} \pfx \may
+\locatedActionF{A}{\asynchInputF{k_2}{x}} \pfx \endF
+\end{align*}
+
+Dually, we now look at $B$. On its composition, we can use both the parallel
+product or the magic wand operation to denote the fact that both
+participants should be present in the interaction providing
+complementary actions. A partial description leaving out session
+initiation constructions is given below:
+
+\begin{align*}
+System &|= (\locatedActionF{A}{\asynchOutputF{k_1}{e_1}} \pfx \may
+\locatedActionF{A}{\asynchInputF{k_2}{x}} \pfx \endF) ~|~
+%\wand
+ (\locatedActionF{B}{\asynchInputF{k_1}{x}} \pfx \may
+\locatedActionF{B}{\asynchOutputF{k_2}{e_2}} \pfx \endF)
+\end{align*}
+
+%The choice between $\pp$ and $\wand$ depends on how much information
+%one have from the system. By $\pp$ one fixes the system to a given
+%topology with two interacting parts, whereas the magic wand operation
+%allows for more flexibility in the system (for instance, allowing a
+%participant $C$ to be present in the system).
+%\CommentHugo{Change here $\wand$ for $\pp$}
+
+
+\subsection{Semantics of  \texorpdfstring{\LL}{LL}}
+ \label{Logic4Struct:locallogic-assertions}
+ 
+ We now give a formal meaning to \LL by providing a set of assertions
+ describing the semantics of each of the operators of the logic with
+ respect to the LTS semantics of the end point calculus described in
+ the previous section.  In particular we introduce the notion of
+ satisfaction.
+  % Let $\sigma$ be a mapping from % participants in a choreography to
+  % variable assignments.  
+ We write $\network |= \psi$ whenever a network $\network$ satisfies a
+ formula $\psi$ in \LL.  The relation $|=$ is the maximum relation
+ satisfying the rules given in
+ Figure~\ref{Logic4Struct:table:local:assertions}.  \begin{myfigure}{t}
+   { \begin{displaymath} \begin{array}{llllllllllllll}
+%          \network |=   \true    & \defSym &       \true         \\
+        \network |= \locatedActionF{A}{\emm}\pfx \psi & \defSym &
+         \begin{array}{r} 
+           \network \equiv \pr{A}{P}{\sigma} \pp M \land \exists
+         Q,\sigma'. \pr{A}{P}{\sigma} \action{\emm} \pr{A}{Q}{\sigma'}
+         \land \pr{A}{Q}{\sigma'} \pp M |= \psi 
+%          ( \emm \neq \emm_1
+%          \oplus \emm_2)
+         \end{array}\\
+%         \network |= \locatedActionF{A}{\emm}\pfx \psi & \defSym &
+%          \begin{array}{r}
+%            \network \equiv \pr{A}{P_1 \oplus P_2}{\sigma} \pp M \land
+%          ( \pr{A}{P_1}{\sigma} |=  \locatedActionF{A}{\emm_1}\pfx \psi
+%          \lor  \pr{A}{P_2}{\sigma} |= \locatedActionF{A}{\emm_2}\pfx
+%          \psi) 
+% %          ( \emm = \emm_1
+% %          \oplus \emm_2)
+%          \end{array}\\
+%          \network |= (e_1=e_2)@A & \defSym & \network \equiv
+%          \pr{A}{P}{\sigma} \pp M ~ \land ~ \sigma(e_1) = \sigma(e_2)  \\
+         \network |= (e_1=e_2)@A & \defSym & \network \equiv
+         \pr{A}{P}{\sigma} ~ \land ~ \sigma(e_1) = \sigma(e_2)  \\
+         \network |= \psi\land \rho & \defSym & \network |= \psi
+         \text{ and } \network |= \rho \\
+%          \network |= \psi => \omega & \defSym &\network | \text{ If } \network |=
+%          \psi \text{ then } \network |= \omega \\
+         \network |= \neg \psi & \defSym & \network \not|= \psi \\
+         \network |= \exists\var\pfx\psi & \defSym & \network
+         |= \psi[w/\var]\quad(\text{for some appropriate } w)      \\
+         \network |= \may \psi & \defSym & \network
+         -->^*M \ \text{ and } M |= \psi     \\
+%          \network |= \new{k} \pfx \psi & \defSym & \network \equiv (\nu k)  M \;\text{ and } M |= \psi \\
+         \network |= \psi \pp \rho & \defSym & \network \equiv M \pp
+         M'
+         \text{ s.t. } M |= \psi \text{ and } M' |= \rho    \\
+%          \network |= \psi \wand \rho & \defSym & \exists M. M |= \rho\ 
+%          \land\ M \pp N  |= \psi\\
+%  This operator can be encoded with
+%          the existential quantifier, according to davide.
+         \network |= \endF & \defSym & \network \equiv \INACTNW
+    \end{array}
+  \end{displaymath}  }
+  \caption{Assertions of the Local logic}
+  \label{Logic4Struct:table:local:assertions}
+\end{myfigure}
+
+
+\begin{definition}[Satisfiability, Validity and Logical Equivalence in
+  \LL]\
+  \begin{itemize}
+  \item A formula $\psi$ is \emph{satisfiable} if there exists a
+    network under which it is true, that is, $\network |= \psi$ for some
+    \network.
+  \item A formula $\psi$ is \emph{valid} if it is true in every
+    network \network, that is, $\network |= \psi$ for every
+    \network.
+  \item A formula $\psi$ is a \emph{logical consequence} of a formula
+    $\rho$ (or $\psi$ \emph{logically implies} $\rho$), denotes with
+    an abuse of notation as $\psi |= \rho$, if every network
+    $\network$ that makes $\psi$ true also makes $\rho$ true up to alpha-renaming
+  \item We say that a formula $\psi$ is \emph{logical equivalent} to
+    a formula $\rho$, written $\psi \logicEquiv \rho$, if $\psi |= \rho$ iff
+    $\rho |= \psi$.
+    \item Given a set of formulae $\Psi$ and $\logicEquiv$, the
+      equivalence class of $\phi \in \Psi$ is the subset of all
+      elements in $\Psi$ such that are logically equivalent to $\psi$:
+      \[
+      [ \psi ] = \{ x \in \Psi | x \logicEquiv \psi \}
+      \]
+  \end{itemize}
+\end{definition}
+
+
+We provide some auxiliary lemmas describing the relation of the logic
+with the behaviours evidenced in end-point processes. The main result
+here is the preservation of satisfiability in type-bisimilar
+processes. That is, if two processes are prunable (the type
+bisimilarity introduced in the End Point Projection), then they
+satisfy the same formula in \LL.
+
+
+\begin{lemma}[Structural congruence preserves satisfiability]
+  \label{Logic4Struct:lemma:StructuralSatisfiability-local} If $M\equiv\network$ and
+  $M |= \psi$, then $\network |= \psi$.
+\end{lemma}
+\begin{proof}(Sketch)
+  It follows by simple case analysis over the rules in $\equiv$. The
+  proof is similar to the one in Lemma \ref{Logic4Struct:lemma:StructuralSatisfiability}.
+\end{proof}
+
+%\begin{proposition}%[Properties of $[ \phi ]$]
+%  It holds that:
+%     \begin{enumerate}
+%       \item $\phi \in [ \phi ] $.
+%        \item For any two equivalence classes $[ \phi ], [ \chi ]$, either
+%          $[ \phi ]=[ \chi ]$ or $[ \phi ]$ and $[ \chi ]$ are
+%          disjoint.
+%          \item The set of all equivalence classes of $\Phi$ form a
+%            partition of $\Phi$.
+%            \item $\chi \logicEquiv \phi$ iff $[ \chi ] = [ \phi ]$.
+%       \end{enumerate}
+%
+%\begin{proof}
+%TBD
+%\end{proof}
+%\end{proposition}
+
+\begin{lemma}\label{Logic4Struct:lemma:LL:implication}
+   if $\network |= \psi $ and $\exists M. M \action{\emm} \network$
+   and $\emm \not = \tau$,
+   then $M |= \rho \land \rho => \psi$.
+\begin{proof}
+It follows by induction on the transitions leading to $\network$ in $M \action{\emm}
+\network$ and the definition of $\network  |= \psi$.
+
+We show the case for $\emm = \asynchServiceInputF{a}{\VEC{k}}$; all other cases
+follow similarly.
+
+If $M \action{\asynchServiceInputF{a}{\VEC{k}}} \network$ then $M
+\equiv \pr{A}{\repInitIn{a}{k} \pfx P \pp P'}{\sigma} \pp M'$ and
+$\pr{A}{P \pp P'}{\sigma'} \pp M'$. Assume w.l.o.g. $\rho =
+\actionF{\asynchServiceInputF{a}{\VEC{k}}} \psi$. We have to show that
+$M |= \rho$ and $\rho => \psi$.
+
+From the definition of $|=$, we have that:
+\begin{align}
+   \pr{A}{\repInitIn{a}{\VEC{k}} \pfx P \pp P'}{\sigma} \pp M' |=
+   \actionF{\asynchServiceInputF{a}{\VEC{k}}} \psi \text{ iff } M \equiv
+   \pr{A}{\repInitIn{a}{\VEC{k}} \pfx P}{\sigma} \pp M''  \notag\\
+   \land \exists
+   Q',\sigma'; \pr{A}{Q'}{\sigma'} \land \pr{A}{Q'}{\sigma'} \pp M''
+   |= \psi 
+\end{align}
+
+After the application of structural congruence rules, then $\pr{A}{\repInitIn{a}{\VEC{k}}
+  \pfx P \pp P'}{\sigma} \equiv \pr{A}{\repInitIn{a}{\VEC{k}}
+  \pfx P }{\sigma} \pp \pr{A}{P'}{\sigma}$. Finally, we have that $M'' = M \pp
+\pr{A}{P'}{\sigma}$ and $\pr{A}{\repInitIn{a}{\VEC{k}}
+  \pfx P }{\sigma} \pp M'' |=
+\actionF{\asynchServiceOutF{a}{\VEC{k}}} \psi$ and
+$\actionF{\asynchServiceOutF{a}{\VEC{k}}} \psi => \psi$, which is what we
+had to show.
+\end{proof}
+\end{lemma}
+
+
+
+\begin{definition}[Input-Output Correspondence] \label{Logic4Struct:def:io-correspondence}
+  We say that a network \network~ is input-output correspondent if
+  it contains no dangling inputs. That is for each $x \in
+  channels(\network)$, then $\bar{x} \in channels(\network)$.
+\end{definition}
+
+% \begin{proposition}[Logical Characterisation of $\prune$]
+%   Let $M,\network$ input-output correspondent networks, then $M
+%   \prune \network$ if and only if $M |= \psi$ implies $\network |=
+%   \psi$. 
+%   \begin{proof}
+%     In \cite{milner1993modal}, the logical characterisation of early
+%     bisimulation is proved for the logic constructed using equations,
+%     inequations, disjunction and $\actionF{\ell}$ formula. The
+%     adaptation of the present setting is easy: 
+\begin{proposition}[Preservation of satisfiability in pruning] \label{Logic4Struct:prop:preservation:pruning}
+  Let $M,\network$ input-output correspondent networks, then  $M |= \psi$ and $M \prune \network$ then $\network |= \psi$.
+  \begin{proof}
+    From the definition of pruning, we have that $M \prune \network$
+    iff $ \tproves{\typeEnv}{M}{\Delta}$, $\tproves{\typeEnv,
+      \typeEnv'}{\network}{\Delta}$, $\network \equiv \network_0 \pp
+    !\network' $ where $\tproves{\typeEnv}{\network_0}{\Delta}$,
+    $\tproves{\typeEnv}{\network'}{\Delta}$ and $M \mergeable N_0$. We need to
+    prove that given $\network \equiv \network_0 \pp
+    !\network' $ then $\network |= \psi$.
+
+    From Definition \ref{Logic4Struct:def:io-correspondence} and the definition of
+    pruning, we know $M \merge N_0$ and $channels(M) =
+    channels(\network)$, so we are not filtering any formulae related
+    to inputs that could be lost in the pruning. 
+
+    From the definition of $|=$, we have that $\network |= \psi ~|~
+    \rho $ iff $\network \equiv \network'' \pp
+    \network'''$. Substituting $\network_0$ for $\network''$ and
+    $!\network$ for $\network'''$, then $\network |= \psi $ holds as a
+    logical consequence of $\network |= \psi ~|~ \rho$.
+    \end{proof}
+\end{proposition}
+
+% \CommentHugo{Can we prove the converse?   Two networks satisfy the
+%   same formulae if they are typed strong
+%   bisimilar (prunable):   Let $M,\network$
+%   input-output correspondent networks, then $M |= \psi$ and 
+%   $\network |=   \psi$  imply $M  \prune \network$.  -- Hint: use the
+%   same proof technique in \cite[Theorem 2]{milner1993modal}, where a the logical characterisation of early
+%     bisimulation is proved for the logic constructed using equations,
+%     inequations, disjunction and $\actionF{\ell}$ formula. The
+%     adaptation of the present setting seems doable.
+% }
+
+\subsection{Translation from \texorpdfstring{\GL}{GL}  to
+  \texorpdfstring{\LL}{LL} }
+
+
+In the same way that we define that the end point projection relates
+operational views of choreographies and end-points, we need to have a
+projection between the declarative visions of choreographies and their
+corresponding visions in end points. We do so by providing a mapping
+between the Global Logic and the Local Logic, as expressed below:
+
+
+\begin{proposition}[\GL Normal form]\label{Logic4Struct:prop:nf}
+  For all \GL formulae $\phi$, there exists $\phi'$ such that $\phi
+  \logicEquiv \exists \vec{t}\pfx \exists
+  \vec{B}\pfx \phi'$, where $\phi'$ is $\exists$ free.
+%  For all choreography $\chor$, there exists $\chor'$ such that $\chor \equiv (\nu
+%  \vec{s})\pfx \exists \vec{t}\pfx \exists \vec{B}\pfx \chor'$, where $\chor'$
+%  is $\nu$ and $\exists$ free.
+%
+%  For all \GL formulas $\Phi$, there exists $\Phi'$ such that $\Phi
+%  \logicEquiv (\nu \vec{s})\pfx \exists \vec{t}\pfx \exists
+%  \vec{B}\pfx \Phi'$, where $\Phi'$ is $\nu$ and $\exists$ free.
+\end{proposition}
+\begin{proof}[Sketch]
+  It follows from structural induction over $\phi$ 
+\end{proof}
+
+\begin{definition}[Participants in a formula]
+Let be $\phi$ a generic \GL
+formula. The set  $\parts(\phi)$ denotes the  set of participants in
+$\phi$, inductively defined as follows:
+
+\begin{align*}
+\parts(\ell) & = \{A,B\} && \text{ If } \ell = \initF A B {a(k)} \\
+& = \{A,B\} && \text{ If } \ell = \comF ABk \\
+& = \{A,B\} && \text{ If } \ell = \branchF ABkl \\\\
+%      & \{A,B\} & \phi = e_1@A = e_2@B \\
+\parts(\phi)      &=  \parts(\ell) \cup \parts(\phi') & &\text{ If }\phi = \langle\ell\rangle \phi' \\
+\parts(\phi)      &=  \parts(\phi') \cup \parts(\chi) &&\text{ If } \phi = \phi' \land \chi \\
+\parts(\phi)      &=  \parts(\phi') \cup \parts(\chi) &&\text{ If } \phi = \phi' \mid \chi \\
+\parts(\phi)      &=  \parts(\phi') &&\text{ If } \phi = \neg \phi'\\
+\parts(\phi)      &=  \parts(\phi') &&\text{ If } \phi = \exists \var\pfx \phi' \\
+\parts(\phi)      &=  \parts(\phi') &&\text{ If } \phi = \may \phi'  \\
+\parts(\phi)      &=  \emptyset && \text{ otherwise}
+\end{align*}
+\end{definition}
+
+
+\begin{definition}[Logical
+  Projection] \label{Logic4Struct:def::logicalprojection}
+
+We define a translation operator $[| \cdot |]$ from the formulae of \GL to
+the formulae of \LL. To this end we will generate a set of formulae for every
+process involved into the global formula. Additionally, let 
+$\phi =  \exists \vec{t}. \exists
+\vec{B}. \phi$
+%$\psi = (\nu \vec{s}). \exists \vec{t}. \exists
+%\vec{B}. \Phi$
+ be its normal form in virtue of
+Proposition~\ref{Logic4Struct:prop:nf}, then $[| \cdot |]$ is defined as follows.
+\begin{gather*}
+  [| \exists \vec{t}\pfx \exists \vec{B}\pfx \Phi|] =
+   \exists \vec{t}\pfx \exists \vec{B}\pfx
+  (\prod_{A \in \parts(\Phi)} [|\Phi|]_A) \\[1ex]
+   \begin{align*}
+&     [|\true|]_A  = \true \\
+&     [|\actionF{\ell} \pfx \Phi|]_A  =     [|l|]_A \pfx [|\Phi|]_A \quad \text{if } A \in \parts(l) \\
+&     [| \actionF{\ell} \pfx \Phi|]_A  =     [|\Phi|]_A \qquad\quad\ \, \text{if } A \notin \parts(l) \\
+&     [|<<>>\Phi|]_A  = <<>> [|\Phi|]_A \vee [|\Phi|]_A\\
+&     [|\Phi \wedge \Psi|]_A  =[|\Phi|]_A \wedge [|\Psi|]_A \\
+&     [|\Phi \mid \Psi|]_A  = [|\Phi|]_A \mid [|\Psi|]_A \\
+&     [|\neg \Phi|]_A  = \neg [|\Phi|]_A \\
+&     [|\endF|]_A  = \endF      \\
+% &     [| e_1 = e_2 |]_A  = \ (e_1 = e_2)@A\\[0.5cm]
+&     [| e_1@A = e_2@B |]_A  = \ (e_1 = e_2)@A\\\\
+     \text{Where } [|l|]_A \text{ is defined as:}\\[0.2cm]
+&     [| \initF{A}{B}{a(k)} |]_A  = A[ \asynchServiceOutF{a}{k} ] \\
+&     [| \initF{A}{B}{a(k)} |]_B  = B[ \asynchServiceInputF{a}{k} ] \\     
+&     [| \comF{A}{B}{k(x)} |]_A  = A[ \asynchOutputF{k}{x}]      \\
+&     [|\comF{A}{B}{k(x)} |]_B  = B[ \asynchInputF{k}{x}] \\ 
+&     [| \branchF{A}{B}{k}{\op} |]_A  = A[ \asynchBranch{k}{op} ]          \\
+&     [| \branchF{A}{B}{k}{\op} |]_B  = B[ \asynchSelection{k}{op} ]
+   \end{align*}
+ \end{gather*}
+
+\end{definition}
+
+The logical projection takes a formula $\phi$ in expressed \GL and generates the
+corresponding \LL formula for each of the participants
+contained in $\phi$. The mapping is standard, therefore we focus our
+description in the case where $\phi$ corresponds to the action formula
+$\actionF{\ell} \phi'$. The projection is defined for each
+participant, so there are corresponding parts for sender and receiver
+end-points in an action formula. For example, in the case $\phi =
+\actionF{\initF{A}{B}{a(k)}} \pfx \phi'$, we have that $\phi$ projects
+to the parallel composition of formulae for participants $A$ and $B$,
+which are defined as $A[ \asynchServiceOutF{a}{k} ] \pfx [ \phi']_A$
+and $B[ \asynchServiceInputF{a}{k} ] \pfx [ \phi' ]_B$
+respectively. Analogous are the cases for in-session communication and
+label selection.
+
+We finish this section  by providing proof of the soundness of the
+mapping between logics. Theorem
+\ref{Logic4Struct:theorem:lp:soundness} states the correspondence
+between end-point projections and logical projections between formulae.
+
+
+
+\begin{lemma}[ End-point projections preserve $\equiv_{rec}$]\label{Logic4Struct:lemma:epp-equiv}
+
+If $\chor \equiv_{rec} \chor'$ then $\epp{\CAL{A}}{\sigma}
+\equiv_{rec} \epp{\CAL{A'}}{\sigma}$ where $\CAL{A},\CAL{A'}$ are
+consistent annotated interactions of $\chor, \chor'$.
+\begin{proof}
+  By induction on the structure of  $\chor$, and Definition
+%   \ref{Logic4Struct:def:cons-annotated-ints}, 
+\ref{Logic4Struct:def:epp}.
+\end{proof}
+\end{lemma}
+
+
+
+
+% \begin{lemma}\label{Logic4Struct:lemma:well-defined-TP}
+%   If $\chor$ is a choreography and $\CAL{A}$ is the consistent
+%   annotation of $\chor$, then $TP(\CAL{A},t_i)$ is well defined for
+%   $\CAL{A}$ and $\chor \action{} \chor'$, then $TP(\CAL{A'},t_i)$ is
+%   well defined, for all $t_i \in \chor$.
+% \end{lemma}
+
+
+\begin{theorem}[Preservation of satisfaction over logical translation] \label{Logic4Struct:theorem:lp:soundness}
+Let $\chor$ a choreography and $\CAL{A}$ a consistent annotation of
+$\chor$. We can conclude that $\epp{\CAL{A}}{\sigma} |= [| \phi |]$
+if $\chor |=_\sigma \phi$.
+\end{theorem}
+
+\begin{proof}
+  Follows by structural induction over $\chor |=_\sigma \phi $,
+  definitions \ref{Logic4Struct:def:epp} and \ref{Logic4Struct:def::logicalprojection}.
+
+Let $parts(\chor)$ a function returning the set of participants
+involved in a choreography. We have the following cases:
+
+\begin{description}
+
+
+\item[Case $\chor |=_\sigma \endF$:]
+
+  If $\chor |=_\sigma \endT$ then $\chor \equiv \INACT$, then $\CAL{A}
+  = \INACT$.
+  Using Definition \ref{Logic4Struct:def:epp}, $\epp{\INACT}{\sigma} = \prod_{A\ \in parts(\INACT)}
+\pr{A}{\prod _{[t]} \bigcup_{t' \in [t]} TP(\INACT,
+  t')}{\sigma @A} = \INACTNW$.
+
+  On the logical side, we have that $[| \endT |] = \endT$ from
+  definition \ref{Logic4Struct:def::logicalprojection}. Then $\INACTNW |= \endT$
+  holds from the definition of $|=$.\\
+
+\item[Case $\chor |=_\sigma \lnot \phi$:]
+
+  If $\chor |=_\sigma \phi$ then $\chor \not |=_\sigma \phi$. We have
+  to show $\epp{\CAL{A}}{\sigma} \not |= [| \phi |]$.
+
+  We proceed by contradiction:  Take $\epp{\CAL{A}}{\sigma} |= [|
+  \phi|]$, then $\chor |=_\sigma \phi$, which is a contradiction to
+  $\chor |=_\sigma \lnot \phi$.
+
+\item[Case $\chor |=_\sigma \phi \land \chi$:] 
+
+  From  the definition of $|=_\sigma$, $\chor
+  |=_\sigma  \phi \land \chi$ iff $\chor |=_\sigma \phi \land 
+  \chor |=_\sigma \chi$. 
+  
+  From the induction hypothesis we have
+  $\epp{\CAL{A}}{\sigma} |= [| \phi |] $ and $\epp{\CAL{A}}{\sigma} |=
+  [| \chi |] $.
+
+  Then $\epp{\CAL{A}}{\sigma} |= [| \phi |] \land [|
+  \chi |]$ from the definition of $|=$. 
+
+\item[Case $\chor |= \phi \pp \chi$:]
+
+  From  the definition of $|=_\sigma$, $\chor |=_\sigma \phi \pp \chi$ iff $\chor \equiv \chor_1 \pp \chor_2$
+  such that $\chor_1 |=_\sigma \phi $ and $\chor_2 |=_\sigma
+  \chi$.
+
+  From the induction hypothesis we know that,
+  $\epp{\CAL{A}_1}{\sigma} |= [| \phi |]$ and $\epp{\CAL{A}_2}{\sigma}
+  |= [| \chi |]$. 
+
+  From Lemma
+  \ref{Logic4Struct:lemma:StructuralSatisfiability} we know that $\chor_1 \pp
+  \chor_2 |=_\sigma \phi$.
+
+ From the definition of the end-point projection and 
+  Lemma \ref{Logic4Struct:lemma:epp-equiv}, we know that there exists
+  $\network$ such that $\network \equiv_{rec} \epp{\CAL{A}_1}{\sigma}
+  \pp \epp{\CAL{A}_2}{\sigma}$. 
+
+  Then $\network |= [| \phi |] \pp [|
+  \chi |]$ follows from the definition of $|=$.
+
+
+\item[Case $C |=_\sigma \actionF{\ell} \phi$:]
+
+ From the definition of $|=_\sigma$, $\chor |=_\sigma \actionF{\ell}
+  \phi$ iff $<. \sigma, \chor.> \action{\ell} <. \sigma', \chor' .>
+  \land \chor' |=_{\sigma'} \phi$.  We have to show that
+  $\epp{\CAL{A}}{\sigma} |= [| \actionF{\ell} \phi |]$.
+
+From induction hypothesis, we have that:
+
+\begin{equation} \label{Logic4Struct:eq:action-IH}
+  \epp{\CAL{A}'}{\sigma'} |= [| \phi |] \land
+  \epp{\CAL{A}'}{\sigma'} \prune \network
+\end{equation}
+
+From (completeness with action labels) in Theorem \ref{Logic4Struct:theorem:epp} we
+have that, given $<. \sigma, \chor.>
+\action{\ell} <. \sigma', \chor' .>$ then:
+  \begin{equation} \label{Logic4Struct:eq:action1}
+    \epp{\CAL{A}}{\sigma} \action{\emm} \network \land
+    \epp{\CAL{A'}}{\sigma'} \prune \network.
+  \end{equation}
+Now, we only have to show that $\network |= [| \phi |]$, which holds
+after using  Proposition \ref{Logic4Struct:prop:preservation:pruning} in
+$\epp{\CAL{A}'}{\sigma'} \prune \network $ from Equation \ref{Logic4Struct:eq:action-IH}.
+
+
+%   from the definition of $|=_\sigma$, $\chor |=_\sigma \actionF{\ell}
+%   \phi$ iff $<. \sigma, \chor.> \action{\ell} <. \sigma', \chor' .>
+%   \land \chor' |=_{\sigma'} \phi$.  From (completeness with action
+%   labels) in Theorem \ref{Logic4Struct:theorem:epp} we have that
+%   \begin{equation} \label{Logic4Struct:eq:action1}
+%     \epp{\CAL{A}}{\sigma} \action{\emm} \network \land
+%     \epp{\CAL{A'}}{\sigma'} \prune \network.
+%   \end{equation}
+
+%   From the induction hypothesis, we have:
+%   \begin{equation} \label{Logic4Struct:eq:action2}
+% %     \epp{\CAL{A'}}{\sigma'} |= [| \phi |],
+%     \network |= [| \phi |],
+%     \end{equation}
+% %     with $\CAL{A'}$ the consistent annotation of $\chor'$.
+%     Then from Lemma
+%     \ref{Logic4Struct:prop:preservation:pruning}, $ \epp{\CAL{A'}}{\sigma'} |= [|
+%     \phi |]$. Finally, from Equations \ref{Logic4Struct:eq:action1} and \ref{Logic4Struct:eq:action2} we get:
+
+%     \begin{equation}
+%        \epp{\CAL{A}}{\sigma} |= [| \actionF{\ell} \phi |]
+%       \end{equation}
+
+%       Which is what we had to show.
+
+
+% \item[Case $C |=_\sigma \actionF{\ell} \phi$:]
+
+%   from the definition of $|=_\sigma$, $\chor |=_\sigma \actionF{\ell}
+%   \phi$ iff $<. \sigma, \chor.> \action{\ell} <. \sigma', \chor' .>
+%   \land \chor' |=_{\sigma'} \phi$. By induction hypothesis we have
+%   that $\epp{\CAL{A'}}{\sigma'} |= [| \phi |]$, where $\CAL{A'}$ is the
+%   consistent annotation of $\chor'$. We have to show
+%   $\epp{\CAL{A}}{\sigma} |= \actionF{\ell} [| \phi |]$.
+
+%   We proceed by case analysis of $\ell$:
+
+%   \begin{itemize}
+
+%     \item{Case $\ell = \initF{A}{B}{a(k)}$:} then $\chor =
+%       \init{A}{B}{a}{k} \pfx \chor'$, and the consistent annotation of
+%       $\chor$ is $\CAL{A} = \init{A^{t_1}}{B^{t_2}}{a}{k} \pfx
+%       \CAL{A'}$. Then''
+      
+%       \begin{equation}\label{Logic4Struct:epp:init-proj}
+%       \epp{\CAL{A}}{\sigma} = \pr{A}{\initOut{a}{k} \pfx
+%         TP(\CAL{A'},t_1)}{\sigma @ A} \pp \pr{B}{\repInitIn{a}{k} \pfx
+%         TP(\CAL{A'},t_2)}{\sigma @ B}
+%       \end{equation}
+
+%       and by Lemma \ref{Logic4Struct:lemma:well-defined-TP} we have that
+%       $TP(\CAL{A'},t_1), TP(\CAL{A'},t_2)$ are well defined.
+
+%       On the logic side:
+      
+%       \begin{equation}
+%         [| \actionF{\initF{A}{B}{a(k)}} \phi |] =
+%         (\pr{A}{\asynchServiceOutF{a}{k}} \pfx [| \phi |] \pp \pr{B}{\asynchServiceInputF{a}{k}} \pfx [| \phi |])
+%         \end{equation}
+
+%         From the assertion semantics for \LL:
+
+%         \[
+%         \pr{A}{\asynchServiceOutF{a}{k}} \pfx [| \phi |] \pp
+%         \pr{B}{\asynchServiceInputF{a}{k}} \pfx [| \phi |] \iff
+%         \network   
+%         \]
+
+%     \end{itemize}
+
+%   By definition of
+%   $|=_\sigma$, $C |=_\sigma \actionF{\ell} \phi \iff C \action{\ell}
+%   C' \land C' |=_\sigma \phi$, and by induction hypothesis $N' =
+%   EPP(C',\sigma')$ such that $N' |= \phi$. We have to show that $EPP(C,\sigma) |= [|
+%   \actionF{\ell} \phi|]$.
+  
+%   We proceed by case analysis of $\ell$, here we present the case for
+%   $\ell = \initF{A}{B}{a(k)}$, and the others follow similarly.
+
+%   If $\ell = \initF{A}{B}{a(k)}$, then we know that $C \action{\ell}
+%   C'$ and $C'' \equiv C'$. Assuming 
+%   $[|  \exists \var\pfx \exists B \actionF{\ell} \phi |] = 
+%   \exists \var \pfx \exists B \prod_{A \in \parts(\phi)} [|
+%   \actionF{\ell} \phi|]$,
+%   then by Definition \ref{Logic4Struct:def::logicalprojection}, we have that:
+% \[
+%       \actionF{\ell}  \phi = [| l |]_A \pfx [| \phi |]_A \text{ if
+% } A \in \parts(l) \text{ or } [| \phi |]_A \text{ otherwise}
+%   \]
+%   \begin{itemize}
+%   	\item (Case  $A \not \in \parts(\ell)$): follows naturally, as $
+%   \exists \var \pfx \exists B \prod_{A \in \parts(\phi)} [| \phi |]_A
+%   $ can be deduced from the induction hypothesis $N' |= \phi $.
+  
+%  	\item (Case $A \in \parts(\ell)$): then \[ [| \actionF{\ell} \phi |]_A =
+%    \locatedActionF{A}{\asynchServiceOutF{a}{k}}\pfx [| \phi |]_A, \] Similarly for
+%    $B$: \[ [| \actionF{\ell} \phi |]_B =
+%    \locatedActionF{B}{\asynchServiceInputF{a}{k}} \pfx [| \phi |]_B,\]
+%    then: \[ [|  \exists \var \pfx \exists B  \actionF{\ell}
+%    \phi |] = \exists \var \pfx \exists B \big(
+%    \locatedActionF{A}{\asynchServiceOutF{a}{k}}\pfx [| \phi |]_A  \pp
+%    \locatedActionF{B}{\asynchServiceInputF{a}{k}} \pfx [| \phi |]_B
+%    \big) .\]
+
+%    Also,  
+%    	\begin{align*}
+%    		N = & EPP ( C, \sigma) && =  \prod_{A \in parts(C)}
+%   \pr{A}{\prod _{[\tau]} \bigcup_{\tau' \in [\tau]} TP(C,
+%     \tau')}{\sigma @A} \\ 
+%     & &&  =\pr{A}{\initOut{a}{k} \pfx TP (C',A)}{\sigma} \pp
+%   \pr{B}{\repInitIn{a}{k} \pfx TP(C',B)}{\sigma}
+%   	\end{align*} 
+% 	We denote the
+%   thread projections $TP (C',A), TP (C',B)$  as $N_A', N_B'$ respectively.
+
+%   By definition of the assertions in $|=$, we have that:
+%   \[
+%   N |=  \exists \var \pfx \exists B \big(
+%    \locatedActionF{A}{\asynchServiceOutF{a}{k}}\pfx [| \phi |]_A  \pp
+%    \locatedActionF{B}{\asynchServiceInputF{a}{k}} \pfx [| \phi |]_B
+%    \big)
+%   \]
+
+%   Which is true for $N \equiv N' \pp M$ and the inductive hypotheses
+%   $\pr{A}{N_A'}{\sigma'} |= [| \phi_A|]$ and   $\pr{B}{N_B'}{\sigma'} |= [|
+%   \phi_B |]$, so we are done.
+% 	\end{itemize}
+% \item{$C |=_\sigma \phi ~|~ \chi$:} 
+
+%   By definition of $|=_\sigma$, $C
+%   \equiv C' \pp C''$, $C' |=_\sigma \phi$ and $C'' |=_\sigma \chi$. By
+%   induction hypothesis $EPP( C', \sigma) = N$,  $EPP( 
+%   C'', \sigma) = N'$,  $N |= \phi$ and $N' |= \chi$, so we can get $N
+%   \pp N' |= \phi \pp \chi $ directly by the definition of $|=$.
+
+\item[Case $\chor |=_\sigma \may \phi$:]
+
+  From  the definition of $|=_\sigma$, $\chor
+  |=_\sigma \may \phi$ iff $(\sigma, \chor) -->^* (\sigma', \chor')$ and
+  $\chor' |=_\sigma \phi$. Assume $(\sigma, \chor) -->^* (\sigma', \chor')$
+  as a finite sequence of transitions $(\sigma, \chor) -->^n
+  (\sigma', \chor')$. We proceed by induction on $n$.
+
+  \begin{description}
+   \item[Case $n=1$:] then $\chor |=_\sigma \may \phi$ iff $(\sigma, \chor) -->^1
+  (\sigma', \chor') \land \chor' |=_{\sigma'} \phi$, which is the same case as
+  for $\chor |=_\sigma \actionF{\ell} \phi$ for any $\ell$. As $\chor
+  |=_\sigma \actionF{\ell} \phi \implies \epp{\CAL{A}}{\sigma} |=
+  [| \actionF{\ell} \phi |]$ then we are done.
+
+   \item[Case $n>1$:] then $\chor |=_\sigma \may \phi$ iff $(\sigma, \chor)
+  -->^{n-1} (\sigma'', \chor'') --> ^1 (\sigma',\chor') \land \chor' |=_{\sigma'}
+  \phi$.
+
+  From the induction hypothesis we get $(\sigma, \chor)
+  -->^{n-1} (\sigma'', \chor'')$ and $\chor ''|=_{\sigma''} \phi$, then $\chor
+  |=_\sigma \may \phi$. 
+
+  Moreover, $\epp{\CAL{A''}}{\sigma''} =N$
+  and $N |= [| \phi |]$, with $\CAL{A''}$ a consistent annotation of
+  $\chor''$, then $\epp{\CAL{A}}{\sigma} |= \may \nextOp [| \phi |]$.
+
+  Finally, using subsumption we know that $\may [| \phi |] \implies
+  \may \nextOp  [| \phi |]$. Then $ \epp{\CAL{A}}{\sigma} |= \may [| \phi |]$, which is what
+  we had to show.
+  \end{description}
+%  Also, from the induction hypothesis we get that $(C', \sigma ') = N'$ and $N'
+%   |= \phi$. We have to show that $EPP(\new{k} C, \sigma) |= [| \may \phi|]$.
+
+%   From the semantics of $|=_\sigma$, we know that $C |=_\sigma \phi $ iff
+%   $(\sigma, C) \action{}^* (\sigma', C')$ and $C' |=_{\sigma'}
+%   \phi$.
+%  Applying $[| \cdot |]$, $[| \may \phi |]_A = \may [| \phi
+%   |]_A \lor [| \phi |]_A$ which holds true by the inductive
+%   hypothesis.
+
+  \item[Case $\chor |=_\sigma e_1@A = e_2@B$:] Then $\sigma(e_1@A) \Downarrow v \land
+    \sigma(e_2@B) \Downarrow v$. 
+
+    From $[| \cdot |]$, we know $[| e_1@A = e_2@B |] = (e_1 = e_2)@A
+    \pp (e_1 = e_2)@B$.
+
+    We know that $\epp{\CAL{A}}{\sigma} |= (e_1 = e_2)@A
+    \pp (e_1 = e_2)@B$ iff $\network \equiv \pr{A}{P}{\sigma} \pp
+    \pr{B}{Q}{\sigma'} \pp M$ and $ \sigma(e_1) = \sigma(e_2) \land
+    \sigma'(e_1) = \sigma'(e_2)$, which follows directly from 
+    Definition \ref{Logic4Struct:def:epp}.
+
+\end{description}
+
+\end{proof} 
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "../Thesis"
+%%% End: 

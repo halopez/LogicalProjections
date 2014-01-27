@@ -1,0 +1,744 @@
+\section{A calculus for orchestrations: The End-point Calculus }
+\label{Logic4Struct:sec:epc}
+
+\subsection{Syntax}
+The end-point calculus (EPC) \cite{carbone7scc} is the $\pi$-calculus
+\cite{milner:99:cmspc} extended with sessions \cite{honda1998lpa} as
+well as locations \cite{hennessy2007distributed} and store
+\cite{DBLP:conf/fsttcs/CarboneNS04}.  Below, $P, Q, \ldots$ denote {\em processes}, $M,
+N, \ldots$ {\em networks}.
+%\begin{table}[ht!]
+\[\label{Logic4Struct:endpointsyntaxlable}
+\begin{array}{ll}
+%\begin{align*}
+\begin{array}{rllll}
+  P ::=
+  &\phantom{{}\mid\quad}  \repInitIn {a}{\VEC{k}}\pfx P & \text{(initin)} 
+  &\mid \quad \initOut{a}{\VEC{k}}\pfx P                  & \text{(initout)}\\
+  &\mid\quad \send{k}{e} P                    &\text{(send)} 
+  &\mid\quad \receive{k}{x} P                &\text{(receive)}\\
+  &\mid\quad \selection{k}{\mathsf{l}} P  &\text{(label selection)} 
+  &\mid\quad \branching{k}{\sum_i \mathsf{l_i} \pfx P_i}  &\text{(label branching)}\\
+%   &\mid \quad\inputBranch{s}{i}{op}{{y}}{P}           & \text{(branch)} \\ 
+%   &\mid\quad\outputP{s}{op}{{e}}\pfx P                & \text{(out)}\\
+%  &\mid \quad x:=e\pfx P                                 & \text{(assign)} 
+  &\mid \quad P_1\oplus P_2                              & \text{(plus)}    
+  &\mid\quad  P_1\pp P_2                                 &
+  \text{(par)}\\  
+  &\mid \quad \rec X\pfx P                              & \text{(rec)}   
+  &\mid\quad  X                                         & \text{(recvar)}\\
+ &\mid\quad\itn{e}{P_1}{P_2}                     & \text{(cond)} 
+%   &\mid \quad \new s P                                  & \text{(new)}     
+  &\mid\quad  \INACT                                    & \text{(inact)}\\
+\end{array}
+\\\\ 
+
+\begin{array}{rll}
+  N
+  ::=
+  &\phantom{{}\mid\quad}   \pr AP\sigma
+  &\text{(participant)}\\
+  &\mid\quad  N_1\pp N_2 &\text{(parnet)}\\
+%   &\mid \quad \new s N  & \text{(newnet)}    \\
+  &\mid\quad  \INACTNW  &\text{(inactnet)}
+\end{array}
+\end{array}
+\]
+% \caption{End Point Calculus: Syntax }
+% \end{table}
+%\end{align*}
+
+
+(initin) and (initout) are dual operations for describing session
+initiation: $\repInitIn{a}{\VEC{k}} \pfx P$ denotes a process
+offering a replicated (available in many copies) service $a$ with
+session channels $\VEC{k}$ while $\initOut{a}{\VEC{k}} \pfx P$ denotes a
+process requesting a service $a$ with session channels $\VEC{k}$. In
+both cases, $P$ is the continuation. The next two processes denote
+standard in-session communications (where $y_i$ in the first
+construct, the branching input, is not bound in $P_i$, and $\{l_i\}$
+should be pairwise distinct). 
+%Next, $x := e \pfx P$ assigns the value
+%of $e$ to $x$ in the store then continues as $P$.  
+The term $\Did{plus}$
+denotes internal choice. The rest is standard. Networks are parallel
+composition of participants, where a participant has the shape $\pr
+AP\sigma$, with $A$ being the name of the participant, $P$ its
+behaviour, and $\sigma$ its local state, now interpreted as a local
+function from variables to values. We often omit $\sigma$ when
+irrelevant. The free session channels, free term variables and service
+channels are defined as usual over processes and networks and,
+similarly to the global calculus, are denoted by $fsc(P/N), fv(P/N)$ and
+$channels(P/N)$ respectively. The syntax here presented differs from
+its original presentation in the absence of the local assignments 
+and restriction of networks and processes.
+
+\subsection{Semantics}
+
+Similarly to the Global Calculus, the EPC is equipped with a
+structural congruence relation over networks and thread processes.
+\begin{definition}[Structural Congruence in EPC]
+The structural congruence relation $\equiv$ in EPC is the least
+congruence on processes and networks such that $(\LITEQ, \INACT,
+\oplus)$, 
+% $(\LITEQ, \INACT, +)$, 
+$(\LITEQ, \INACT, \pp)$ and $(\LITEQ,
+\epsilon, \pp)$
+% , $(\pp,\INACTNW)$ 
+are commutative monoids and such
+that 
+% $ a) \new{s}\INACT \LITEQ \INACT$, 
+% $ b) \new{s_1}\new{s_2}P
+% \LITEQ \new{s_2}\new{s_1}P$, 
+% $ c) \new{s}P\pp Q \LITEQ \new{s}(P\pp Q)
+% ~(\text{for }s\not\in\fsc{Q})$, 
+% $ d) \pr{A}{P}{\sigma} \LITEQ
+% \pr{A}{Q}{\sigma} ~ (\text{for }P \LITEQ Q)$, 
+% $ e)\pr{A}{\new{s}P}{\sigma} \LITEQ \new{s}(\pr{A}{P}{\sigma})$, 
+% $ f)\new{s_1}\new{s_2}M \LITEQ \new{s_2}{\new{s_1}}M$, 
+% $ g)\new{s}\INACTNW \LITEQ \INACTNW$, 
+% $ h) \new{s}M\pp N \LITEQ
+% \new{s}(M\pp N) ~(\text{for }s\not\in\fsc{N})$, 
+% $ i)\pr{A}{\INACT}{\sigma} \equiv \INACTNW$.
+$ \pr{A}{P}{\sigma} \LITEQ
+\pr{A}{Q}{\sigma} ~ (\text{for }P \LITEQ Q)$, and
+$ \pr{A}{\INACT}{\sigma} \equiv \INACTNW$.
+\end{definition}
+
+We give an operational semantics in terms of  configurations $ N
+\action{\emm} N' $, where $N$ and $N'$ are networks and $\emm$ belongs
+to the sets of labels $\{ \tau,\,\asynchServiceOutF{s}{k},\,
+\asynchServiceInputF{s}{k},\,\asynchOutputF{k}{x},\,
+\asynchInputF{k}{x},\, \asynchBranch{k}{l},\, \asynchSelection{k}{l}
+\} $.  Its labelled transition semantics follows the $\pi$-calculus
+and is defined by the rules given in
+Figure~\ref{Logic4Struct:table:endpoint:sos}. Note that symmetric rules are omitted.
+\begin{myfigure}{t!}
+  \begin{align*} &
+\myruleg{    E-S.Init.O} 
+{    }
+    { {\initOut{a}{\VEC{k}}\pfx P}
+      \action{\asynchServiceOutF{a}{\VEC{k}}} P  }
+~
+\myruleg{    E-S.Init.I} 
+    {    }
+    { {\repInitIn{a}{\VEC{k}}\pfx P}
+      \action{\asynchServiceInputF{a}{\VEC{k}}}
+      P \pp \repInitIn{a}{\VEC{k}}\pfx P    }
+~
+\myruleg{    E-M.Out} 
+{ e\Downarrow v }{
+      {\outputP{k}{e} \pfx P} \action{\asynchOutputF{k}{v}}
+      {P} }
+~
+\myruleg{    E-M.In} 
+{ }{
+      \inputP kx\pfx P
+      \action{\asynchInputF{k}{x}}
+      P }
+    \\&
+\myruleg{    E-L.Sel} 
+{ }{
+      \selection{k}{\mathsf{l}} P
+      \action{\asynchSelection{k}{l}}
+      P }
+~
+\myruleg{    E-L.Branch} 
+{ 1\leq j\leq i }{
+      \branching{k}{\sum_i \mathsf{l_i} \pfx P_i}
+      \action{\asynchBranch{k}{l_j}}
+      P_j }
+~
+\myruleg{    E-Sum }
+{ i\in\{1,2\} }
+    {  {P_1\oplus P_2} \action{\tau} {P'_i}    }
+~
+\myruleg{    E-Par.P}
+{  P \action{\emm}  P' } 
+    {  P\pp Q  \action{\emm} P'\pp Q}
+\end{align*}
+\caption{End Point Calculus: LTS semantics for Processes}
+\label{Logic4Struct:table:endpoint:sosP}
+\end{myfigure}
+
+
+\begin{myfigure}{t!}
+  \begin{align*} &
+\myruleg{ E-Part}
+    { P \action{\emm}  P' 
+      ~
+      \emm \neq \asynchInputF{k}{x} }
+    {
+      \pr A P\sigma
+      \action{\emm}
+      \pr A {P'}\sigma
+    } 
+ \myruleg{E-Par.N}
+{ M \action{\emm}  M' }  {
+      M \pp N \action{\emm} M' \pp N } 
+~
+\myruleg{ E-Part.In}
+{ P \action{\asynchInputF{k}{x}}  P'  }
+    {
+      \pr A P\sigma 
+      \action{\asynchInputF{k}{v}}
+      \pr A {P'}{\sigma[x\mapsto v]}
+    } 
+\\&
+\myruleg{ E-Com} 
+{  N \action{\emm} N'
+      ~
+      M \action{\ol\emm} M'
+      ~
+      \emm \text { not init}
+%      \emm\not\in\{\asynchServiceInputF {ch}{s},\asynchServiceOutF {ch}{s}\}
+    }
+    { N \pp M
+      \action{\tau}
+      N' \pp M'
+    }
+~
+%     \Did{E-Res}\
+%     &
+%     \Rule{ M \action{\emm}   M'
+%       \qquad
+%       s\not\in\fn (m)  } {
+%       \new{s}M   \action{\emm}    \new{s}M'   }
+%     &
+\myruleg{E-Init} 
+{ 
+      N \action{\asynchServiceOutF {a}{\VEC{k}}} N'
+      ~
+      M \action{\asynchServiceInputF {a}{\VEC{k}}} M' 
+      % ~
+%       \VEC{k} \not \in fn(N') \cup fn(M') 
+      \quad \VEC{h} \text{ is fresh}
+    }
+    { N \pp M
+      \action{\tau}
+      (N' \pp M')[\VEC{h}/\VEC{k}]
+    }
+\\& 
+\myruleg{E-IfT }{
+  \sigma\vdash e \converges \true \qquad 
+  \pr{A}{P_1}{\sigma}  \action{\emm}   \pr{A}{P'_1}{\sigma}
+} 
+{  \pr{A}{\itn{e}{P_1}{P_2}}{\sigma}
+  \action{\emm}
+  \pr{A}{P'_1}{\sigma}} 
+~
+\myruleg{E-IfF }
+{
+  \sigma\vdash e \converges \false \qquad 
+  \pr{A}{P_2}{\sigma}  \action{\emm}   \pr{A}{P'_2}{\sigma}
+} 
+{
+  \pr{A}{\itn{e}{P_1}{P_2}}{\sigma}
+  \action{\emm}
+  \pr{A}{P'_2}{\sigma}
+}
+\end{align*}
+  \caption{End Point Calculus: LTS semantics for Networks}
+  \label{Logic4Struct:table:endpoint:sos}
+\end{myfigure}
+
+%%%%%%%%%%%%% HUGO's VERSION
+% \begin{table}[ht!]
+% {\scriptsize \begin{align*} 
+%     {\tiny \Did{E-S.Init.O}} & 
+%     \Rule{
+%       \VEC{s} \not \in \fsc{P'}}
+%     {
+%       \pr{A}{\initOut{ch}{\VEC{s}}\pfx P \pp P'}{\sigma}
+%       \action{\asynchServiceOutF{ch}{\VEC{s}}}
+%       \pr{A}{P \pp P'}{\sigma} 
+%     }&
+%     {\tiny     \Did{E-Par.N} }&
+%     \Rule{
+%       M \action{\emm}  M' } 
+%     {
+%       M \pp N \action{\emm} M' \pp N } 
+% \end{align*}\vspace{-0.4cm}
+% \begin{align*} 
+%     {\tiny \Did{E-S.Init.I} }&
+%     \Rule{ 
+%       \pr{A}{P}{\sigma}
+%       \action{\asynchServiceOutF{ch}{\VEC{s}}} \pr{A}{P'}{\sigma} \qquad
+%       \VEC{s} \not \in \fsc{Q'} }
+%     { \pr{A}{P}{\sigma} \pp \pr{B}{ \repInitIn{ch}{\VEC{s}}\pfx Q \pp Q'}{\sigma'}
+%       \action{\asynchServiceInputF{ch}{\VEC{s}}}
+%       \new{\VEC{s}} \pr{A}{P'}{\sigma} \pp \pr{B}{\repInitIn{ch}{\VEC{s}} \pfx Q \pp
+%         Q \pp Q'}{\sigma'}
+%     }
+% \end{align*}\vspace{-0.4cm}
+% \begin{align*} 
+%     {\tiny     \Did{E-M.Out} }& 
+%     \Rule{
+%       \sigma \vdash e@A\Downarrow v
+%     }{
+%       \pr{A}{\outputP{s}{e} \pfx P}{\sigma} \action{\asynchOutputF{s}{v}}
+%       \pr{A}{P}{\sigma}
+%     }
+%     &{\tiny     \Did{E-L.Sel} }& 
+%     \Rule{
+%     }{
+%       \pr{A}{\selection{s}{\mathsf{op}} P}{\sigma} \action{\asynchSelection{s}{op}}
+%       \pr{A}{P}{\sigma}
+%     }
+% \end{align*}\vspace{-0.4cm}
+% \begin{align*} 
+%     {\tiny     \Did{E-M.In} }& 
+%     \Rule{
+%       \pr{A}{P}{\sigma} \action{\asynchOutputF{s}{v}}
+%       \pr{A}{P'}{\sigma} \qquad \sigma''=\sigma[x@B\mapsto v]}
+%     {
+%       \pr{A}{P}{\sigma} \pp \pr{B}{\inputP{s}{x} \pfx Q }{\sigma'} \action{\asynchInputF{s}{x}}
+%       \pr{A}{P'}{\sigma} \pp \pr{B}{Q }{\sigma''} }\\[0.05cm]
+%     {\tiny     \Did{E-L.Branch} }& 
+%     \Rule{
+%       \pr{A}{P}{\sigma} \action{\asynchSelection{s}{op_i}}
+%       \pr{A}{P'}{\sigma} }
+%     {
+%       \pr{A}{P}{\sigma} \pp \pr{B}{\branching{s}{\sum_i \mathsf{op_i} \pfx Q_i} }{\sigma'} \action{\asynchBranch{s}{op_i}}
+%       \pr{A}{P'}{\sigma} \pp \pr{B}{Q_i }{\sigma''} }
+% \end{align*}\vspace{-0.4cm}
+% \begin{align*} 
+% {\tiny \Did{E-IfT} }&
+% \Rule
+% {
+%   \sigma\vdash e \converges \true \qquad 
+%   \pr{A}{P_1}{\sigma}  \action{\emm}   \pr{A}{P'_1}{\sigma}
+% } 
+% {
+%   \pr{A}{\ifthenelse{e}{P_1}{P_2}}{\sigma}
+%   \action{\emm}
+%   \pr{A}{P'_1}{\sigma}
+% } &
+%     {\tiny \Did{E-IfF} }&
+% \Rule
+% {
+%   \sigma\vdash e \converges \false \qquad 
+%   \pr{A}{P_2}{\sigma}  \action{\emm}   \pr{A}{P'_2}{\sigma}
+% } 
+% {
+%   \pr{A}{\ifthenelse{e}{P_1}{P_2}}{\sigma}
+%   \action{\emm}
+%   \pr{A}{P'_2}{\sigma}
+% }
+% \\[0.05cm]   
+%     {\tiny \Did{E-Par.P} }&
+%     \Rule{ 
+%       \pr{A}{P}{\sigma}
+%       \action{\emm} \pr{A}{P'}{\sigma'}}
+%     { \pr{A}{P \pp Q}{\sigma} 
+%       \action{\emm}
+%       \pr{A}{P' \pp Q}{\sigma'}
+%     }
+% &
+%     {\tiny     \Did{E-Sum} }&
+%     \Rule{
+%       \pr{A}{P_i}{\sigma} \action{\emm} \pr{A}{P'_i}{\sigma}\quad i\in\{1,2\}
+%     }{
+%       \pr{A}{P_1\oplus P_2}{\sigma} \action{\emm} \pr{A}{P'_i}{\sigma} }
+% \end{align*}\vspace{-0.4cm}
+% \begin{align*}
+% %     {\tiny   \Did{E-Rec} }&
+% %   \Rule {
+% %     \pr A {P\MSUBS{\mu X.P}{X}}{\sigma} \pp N 
+% %     \action{\emm}   N' } 
+% %   {
+% %   \pr{ A }{\mu X.P}{\sigma} \pp N \action{\emm}  N' } &
+%     {\tiny    \Did{E-Assign}\ }&
+%    \Rule {
+%      \sigma\proves e\converges v \quad 
+%      \pr{A}{P}{\sigma} \action{\emm} \pr{A}{P'}{\sigma'}
+%    } {
+%      \pr{A}{x:=e\pfx P}{\sigma} 
+%      \action{\emm}
+%      \pr{A}{P'}{\sigma'[x\mapsto v]}}\\[0.05cm]
+%     {\tiny    \Did{E-Res} }&
+%    \Rule{
+%      M \action{\emm}   M'
+%    } {
+%      \new{s}M   \action{\emm}    \new{s}M'} &
+%    {\tiny \Did{E-Struct} }& 
+%    \Rule{
+%      M\equiv M'\quad M' \action{\emm} N'\quad N'\equiv N
+%    } { 
+%      M \action{\emm} N}
+% \end{align*}
+% }
+% \caption{End Point Calculus: LTS semantics}
+% \label{Logic4Struct:table:endpoint:sos}
+% \end{table} 
+
+
+
+Rules in the transition semantics for EPC treat processes and networks
+differently. \Did{E-S.Init.O} and \Did{E-S.Init.I} describe 
+session initiation from the point of view of the requester and
+provider, respectively. Here, $\repInitIn{a}{k}.P$ denotes a
+replicated service. Message passing communication over sessions are
+described by\Did{E-M.Out} and \Did{E-M.In}, where $e\Downarrow v$
+describes the evaluation of expression and $P[v/x] $ the substitution
+of variables $v$ by $x$ in $P$. Label
+selection/branching is given by \Did{E-L.Sel} and
+\Did{E-L.Branch}. \Did{E-Par.P} and \Did{E-Sum} are standard rules
+representing parallel composition and internal choice. Rules
+\Did{E-Part} allows transition labels to travel out from processes to
+networks without modifying the store. \Did{E-Part.In} modifies the
+store of a participant after having exhibited an input
+behaviour. \Did{E-Com} describes synchronisation of transition labels,
+used for message passing and label selection between
+networks. \Did{E-Init} represents session initiation between different
+networks, here $w$ acts as a ``fresh'' variable, used to represent
+the creation of a new session between $\network$ and $M$. Finally,  
+\Did{E-Par.N} describes the parallel composition between networks
+
+
+As it is expected, both the  labelled transition semantics for EPC above presented
+and the reduction semantics presented in
+Figure \ref{Logic4Struct:table:endpoint:reduction-semantics} coincide.
+
+
+\begin{myfigure}{ht!}
+\begin{align*}
+&\myruleg{E-RInit}
+  {     k_i\not\in\fsc{P'}\cup\fsc{Q'}   \quad \tilde{h} \text{ is
+      fresh}}
+  {   \pr {A}{\repInitIn{a}{\tilde k}\pfx P\pp P'}\sigma\pp
+   \pr {B}{\initOut{a}{\tilde k}\pfx Q\pp Q'}{\sigma'}    \to \ 
+   % \new  {\tilde k}
+   (
+   \pr {A} {\repInitIn{a}{\tilde k}\pfx P\pp P\pp P'} {\sigma}\pp \pr
+   {B}{Q\pp Q'} {\sigma'}
+   )[\tilde{h}/\tilde{k}]
+  }   
+\\[0.5cm]
+& \qquad \myruleg{ E-RCom}
+  {   \sigma\proves e\converges v   } 
+  {  \pr{A}{\receive{k}{x} P \,|\, P'}{\sigma}
+  \,|\, 
+  \pr{B}{\send{k}{x} Q \,|\, Q'}{\sigma'}
+  \to \ 
+  \pr{A}{P\pp P'}{\sigma[x\mapsto v]}
+  \pp 
+  \pr{B}{Q\pp Q'} {\sigma'}  }
+\\[0.5cm]
+&\myruleg{ E-RSel}
+  {   j \in I   } 
+  {  \pr{A}{ \branching{k}{\sum_i \mathsf{l_i} \pfx P_i} \,|\, P'}{\sigma}
+  \,|\, 
+  \pr{B}{\selection{k}{l_j} Q \,|\, Q'}{\sigma'}
+  \to \ 
+  \pr{A}{P_j\pp P'}{\sigma}
+  \pp 
+  \pr{B}{Q\pp Q'} {\sigma'}  }
+\\[0.5cm]
+&\myruleg{ E-RIfT}
+{  \sigma\vdash e \converges \true } 
+{  \pr{A}{\itn{e}{P_1}{P_2}\,|\, P'}{\sigma}
+  \;\to\; 
+  \pr{A}{P_1\pp P'}{\sigma}}
+\qquad \qquad 
+\myruleg{ E-RPar}
+{  M   \;\to\;    M' } 
+{   M|N   \;\to\;    M'|N} 
+% \quad 
+% \myruleg{ E-RRes}
+% {   M   \;\to\;    M' } 
+% {  \new{k}M   \;\to\;    \new{k}M' } 
+\\[0.5cm]
+&\myruleg{ E-RIfF}
+{  \sigma\vdash e \converges \false } 
+{   \pr{A}{\itn{e}{P_1}{P_2}\,|\, P'}{\sigma}   \;\to\;    \pr{A}{P_2\pp P'}{\sigma}}
+\quad
+\myruleg{ E-RSum}
+{ i\in\{1,2\} }  {   A[P_1\oplus P_2|R]_\sigma   \;\to\;
+  A[P_i|R]_\sigma }   
+\end{align*} 
+\begin{align*}
+% \Did{E-Res1} \ &
+% \Rule
+% {
+%   \pr{A}{P}{\sigma}  
+%   \;\to\; 
+%   \pr{A}{P'}{\sigma'}  
+% } 
+% {
+%   \pr{A}{\new{s}P}{\sigma}
+%   \;\to\; 
+%   \pr{A}{\new{s}P'}{\sigma}
+% } 
+% &
+\myruleg{ E-RRec}
+{
+  \pr A {P\MSUBS{\mu X.P}{X}\pp Q}{\sigma}\pp N
+  \;\to\; 
+  N'
+} 
+{
+  \pr A {\mu X.P\pp Q}{\sigma}\pp N
+  \;\to\; 
+  N'
+}
+&
+% \myruleg{ E-RAssign} 
+% {
+%   \sigma\proves e\converges v
+% } 
+% {
+%   \pr{A}{x:=e\pfx P\,|\, P'}{\sigma}
+%   \;\to\; 
+%   \pr{A}{P\pp P'}{\sigma[x\mapsto v]}
+% }
+% \\\\
+% &
+\qquad \myruleg{ E-RStruct}{M\equiv M'\quad M'\to N'\quad N'\equiv N} { M\to N}
+\end{align*}
+% \begin{align*}
+% &
+% % \Did{E-Par2} \ &
+% % \Rule
+% % {
+% %   \pr{A}{P_1\,|\, R}{\sigma}  
+% %   \;\to\; 
+% %   \pr{A}{P'_1\,|\, R}{\sigma'}  
+% % } 
+% % {
+% %   \pr{A}{P_1\,|\,  P_2\,|\, R}{\sigma}  
+% %   \;\to\; 
+% %   \pr{A}{P'_1\,|\,  P_2\,|\, R}{\sigma'}  
+% % } 
+% \end{align*}
+\caption{Reduction Relation for the End-Point Calculus \cite{carbone7scc}}
+\label{Logic4Struct:table:endpoint:reduction-semantics}
+% \end{align*}
+
+\end{myfigure}
+
+
+\begin{lemma} \label{struct-cong-epc}
+If $\network \equiv M$ and $\network \action{\emm} \network'$  then $M
+\action{\emm} \network'$.
+
+\begin{proof}
+It follows by induction on the structural congruence rules in
+    $\equiv$ and second induction on the height of the derivation tree
+    for $\network \action{\emm} \network'$.
+\end{proof}
+\end{lemma}
+
+\begin{proposition}[Reduction and LTS semantics coincide in EPC]
+Given $\network, \network'$ networks, $->$ the reduction relation
+between networks  
+% in \cite{carbone7scc} (given for readability in
+% Appendix \ref{Logic4Struct:appendix-semanticsEPC})
+ and $\action{\emm}$ the
+transition relation between networks in EPC.
+%  given in Figure \ref{Logic4Struct:table:endpoint:sos}.
+ We
+can say that:
+
+\begin{description}
+  \item[Soundness]: If $ \network -> \network'$, then
+    $\exists \emm $ s.t. $ \network \action{\emm} \network'$.
+  \item[Completeness]: If $ \network \action{\tau} 
+    \network'$ then $\network ->  \network'$. 
+\end{description}
+\begin{proof}\hfill
+\begin{description} 
+  \item[(On Soundness):] \hfill \\
+The proof proceeds by induction on the height of the derivation tree
+for $\network -> \network'$, with a case analysis on the last applied
+rule. We have the following cases:
+% The proof proceeds by induction on the length of the
+%  reductions in $->$.
+ 
+ \begin{description}
+   \item[Case $\Did{E-RInit}$:] We have that $\network =
+     \pr{A}{\repInitIn{a}{\VEC{k} \pfx P} \pp P'}{\sigma} \pp
+     \pr{B}{\initOut{a}{\VEC{k}} \pfx Q \pp Q'}{\sigma'}$ and we have
+     that for $k_i \in \VEC{k}$, $k_i \in fsc(P') \cup fsc(Q')$ and
+     $h$ is fresh, and $\network -> (\pr{A}{\repInitIn{a}{\VEC{k}}
+       \pfx P \pp P'}{\sigma} \pp  \pr{B}{Q \pp Q'}{\sigma'})[\VEC{h}/
+     \VEC{k}]$.
+
+     From the application of $\Did{E-Part}$, \Did{E-Par.P} and \Did{E-S.Init.I} in
+     $\network$, we have that $\network_1 =
+     \pr{A}{\repInitIn{a}{\VEC{k}} \pfx P  \pp P'}{\sigma}
+     \action{\asynchServiceInputF{a}{\VEC{K}}} \pr{A}{
+       \repInitIn{a}{\VEC{k}} \pfx P \pp P \pp P'}{\sigma}$.
+
+     Similarly, from the application of \Did{E-Part}, \Did{E-Par.P} and \Did{E-S.Init.O} we get
+     $\network_2 =  \pr{B}{\initOut{a}{\VEC{k}} \pfx Q \pp
+       Q'}{\sigma'}$ $
+     \action{\asynchServiceOutF{a}{\VEC{K}}} \pr{B}{ Q \pp
+       Q'}{\sigma'} $.
+
+     Finally, after application of \Did{E-Int} we have that
+      \[ \network_1 \pp \network_2 \action{\tau}
+     (\pr{A}{\repInitIn{a}{\VEC{k}} \pfx P \pp P \pp P'
+       }{\sigma} \pp \pr{B}{Q \pp
+       Q'}{\sigma'})[\VEC{h}/ \VEC{k}], \] which is what we had to show.
+ 
+     \item[Case \Did{E-RCom}:] We have that $\network =
+       \pr{A}{\inputP{k}{x} \pfx \pp P'}{\sigma} \pp
+       \pr{B}{\outputP{k}{x} \pfx Q \pp Q'}{\sigma'}$, and given
+       $\sigma |- e@\Downarrow v$ then $\network -> \pr{A}{P \pp P'}{\sigma[x
+         \mapsto v]]} \pp \pr{B}{Q \pp Q'}{\sigma'}$.
+
+       After the application of \Did{E-Part}, \Did{E-Par.P} and
+       \Did{E-M.Out} over $\network_2 = \pr{B}{\outputP{k}{x} \pfx Q
+         \pp Q'}{\sigma'}$ then $\network_2
+       \action{\asynchOutputF{k}{v}} \pr{B}{ Q
+         \pp Q'}{\sigma'}$.
+
+       Similarly, the application of \Did{E-Part.In},\Did{E-Par.P} and
+       \Did{E-M.In} to $\network_1 = \pr{A}{\inputP{k}{x} \pfx P \pp
+         P'}{\sigma} $ leads to $\network_1
+       \action{\asynchInputF{k}{v}} \pr{A}{P \pp
+         P'}{\sigma[x \mapsto v]}$.
+
+       Finally, the application of \Did{E-Com} over $\network_1 \pp
+       \network_2$ leads to $\network_1 \pp \network_2 \action{\tau}
+       \pr{A}{P \pp P'}{\sigma[x \mapsto v]} \pp \pr{B}{ Q \pp
+         Q'}{\sigma'}$, which is what we had to show.
+       
+       \item[Case \Did{E-RSel}:] We have that $\network =  \pr{A}{
+           \branching{k}{\sum_i \mathsf{l_i} \pfx P_i} \,|\,
+           P'}{\sigma} \,|\, \pr{B}{\selection{k}{l_j} Q \,|\,
+           Q'}{\sigma'}$ and, provided $j \in I$, then $\network ->
+         \pr{A}{P_j\pp P'}{\sigma}  \pp   \pr{B}{Q\pp Q'}{\sigma'} $.
+
+         After the application of \Did{E-part}, \Did{E-Par.P} and
+         \Did{E-L.Branch} over $\network_1 = \pr{A}{
+           \branching{k}{\sum_i \mathsf{l_i} \pfx P_i} \,|\,
+           P'}{\sigma}$ we get that $\network_1
+         \action{\asynchBranch{k}{l_j}} \pr{A}{P_j \pp P'}{\sigma}$.
+
+         Similarly,   after the application of \Did{E-part}, \Did{E-Par.P} and
+         \Did{E-L.Branch} over $\network_2 = \pr{B}{\selection{k}{l_j} Q \,|\,
+           Q'}{\sigma'}$ we get that $\network_2
+         \action{\asynchSelection{k}{l_j}} \pr{B}{Q \pp Q'}{\sigma'}$.
+
+         Finally, after the application of \Did{E-Com} over
+         $\network_1 \pp \network_2$ we get: $\network_1 \pp
+         \network_2 \action{\tau} \pr{A}{P_j \pp P'}{\sigma} \pp
+         \pr{B}{Q \pp Q'}{\sigma'}$, and we are done.
+
+         \item[Cases \Did{E-RifT} and \Did{E-RifF}:] 
+           It must be the case that $\network =
+           \pr{A}{\itn{e}{P_1}{P_2} \pp P'}{\sigma}$ and assume $\sigma |- e
+           \Downarrow \true$ and $\pr{A}{P_1}{\sigma} -> \pr{A}{P'_1}{\sigma}$, then  $\network ->
+           \pr{A}{P'_1 \pp P'}{\sigma}$. One can easily show that
+           $\pr{A}{\itn{e}{P_1}{P_2} \pp P'}{\sigma} \action{\emm}
+           \pr{A}{P'_1 \pp P'}{\sigma}$ after the application of rules 
+           \Did{E-Par.P} and
+           \Did{E-IfT} and the induction hypothesis
+           $\pr{A}{P_1}{\sigma} \action{\emm} \pr{A}{P'_1}{\sigma}$ (the converse case is
+           symmetrical).  
+           
+           \item[Case \Did{E-RPar}, \Did{E-RSum} and \Did{E-RRec}:]
+             They follow directly after simple rule induction.
+
+             \item[Case \Did{E-RStruct}:]
+               Given $\network'' -> \network'''$ then we
+               can assume that $\network \equiv \network''$ and
+               $\network -> \network' \land \network' \equiv
+               \network'''$. We need to show that $\network''
+               \action{\emm} \network'''$. From Lemma
+               \ref{struct-cong-epc} and the inductive hypothesis
+               $\network \equiv \network'' \land \network
+               \action{\emm} \network' \land \network' \equiv
+               \network'''$ then $\network'' \action{\emm}
+               \network'''$.
+
+  \end{description}
+
+ \item[On Completeness:] \hfill \\ 
+The proof proceeds by induction on the height of the derivation tree
+for $\network \action{\tau} \network'$, with a case analysis on the
+last applied rule.  
+% The proof proceeds by induction on the length of the
+%  derivations in $\action{\tau}$.
+
+ \begin{description}
+   \item[Case \Did{E-Com}:] We have that $M \action{\overline \emm} M'$
+     and $\network \action{\emm} \network'$ where $m$ is not part of the
+     initialisation labels $\{\asynchServiceOutF{a}{k},
+     \asynchServiceInputF{a}{k} \}$, then $\network \pp M
+     \action{\tau} N' \pp M'$. We have to show that $\network \pp M
+     -> N' \pp M'$. 
+
+     We proceed by case analysis on $\emm$:
+     \begin{itemize}
+       \item {\bf ($\emm = \asynchOutputF{k}{v}$ and $\overline{\emm} =
+           \asynchInputF{k}{v}$):}
+         Assume $\network  = \pr{A}{\outputP{k}{e} \pfx P'}{\sigma}$
+         and $M = \pr{B}{\inputP{k}{x} \pfx Q'}{\sigma'}$ and $\sigma
+         |- e\Downarrow v$.
+         
+         On the one hand, after application of \Did{E-M.Out},
+         \Did{E-M.In}, \Did{E-Part.In}, \Did{E-Part} and \Did{E-Com}
+         in the LTS, we have that $M \pp \network \action{\tau}
+         \pr{A}{P'}{\sigma} \pp \pr{B}{Q'}{\sigma'[x \mapsto v]}$.
+
+         On the other hand, after the application of \Did{E-RCom}  to
+         $M \pp \network$ we get that $M \pp \network ->
+         \pr{A}{P'}{\sigma} \pp \pr{B}{Q'}{\sigma'[x \mapsto v]}$, so
+         we are done.
+
+         \item {\bf ($\emm = \asynchSelection{k}{l}$ and $\overline{\emm}
+             = \asynchBranch{k}{l}$:)} 
+           Assume w.l.o.g. $\network =
+           \pr{A}{\selection{k}{l} \pfx P'}{\sigma}$ and $M =
+           \pr{B}{\branching{k}{\sum_i \mathsf{l_i} \pfx
+               Q_i}}{\sigma'}$. From the application of \Did{E-L.Sel},
+           \Did{E-L.Branch}, \Did{E-Part} and \Did{E-Com} in the LTS
+           semantics, we get that $ \network \pp M \action{\tau}
+           \pr{A}{P'}{\sigma} \pp \pr{B}{Q_i}{\sigma'}$.
+           Similarly, from the application of \Did{E-RSel} in the
+           reduction semantics we get that $\network \pp M ->
+           \pr{A}{P'}{\sigma} \pp \pr{B}{Q_i}{\sigma'}$ so we are done.
+       \end{itemize}
+
+       \item[Case \Did{E-Init}:] We have that $M
+         \action{\asynchServiceOutF{a}{\VEC{k}}} M'$ and $\network \action{\asynchServiceInputF{a}{\VEC{k}}}
+         \network'$. Then applying \Did{E-Init} in the LTS semantics
+         we get $\network \pp M \action{\tau} (\network' \pp
+         M')[\VEC{h}/\VEC{k}]$. We have  to show that $\network \pp M -> (\network' \pp
+         M')[\VEC{h}/\VEC{k}]$.
+
+         Assume w.l.o.g. $M = \pr{A}{\repInitIn{a}{\VEC{k} \pfx P
+           }}{\sigma}$ and $\network =
+         \pr{B}{\initOut{a}{\VEC{k}}}{\sigma'}$. After the application
+         of \Did{E-S.Init.O}, \Did{E-Part}, \Did{E-S.init.I} and
+         \Did{E-Init} in the LTS, we have that $M \pp \network
+         \action{\tau} ( \pr{A}{ \repInitIn{a}{\VEC{k}} \pfx P \pp
+             P}{\sigma} \pp
+           \pr{B}{Q}{\sigma'})[\VEC{k}/\VEC{h}]$. Similarly, after  applying
+           \Did{E-RInit} to $M \pp \network$ we get that $M \pp
+           \network -> ( \pr{A}{ \repInitIn{a}{\VEC{k}} \pfx P \pp
+             P}{\sigma} \pp  \pr{B}{Q}{\sigma'})[\VEC{k}/\VEC{h}]$, which is what we had to
+           show.
+
+           \item[Case \Did{E-Sum}]: It follows immediately after the
+             application of \Did{E-RSum}.
+   \end{description}
+
+\end{description}
+\end{proof}
+\end{proposition}
+
+
+
+\input{LogicalProjection/epc-types}
+
+\input{LogicalProjection/epp-types}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "../Thesis"
+%%% End: 

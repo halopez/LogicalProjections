@@ -1,0 +1,890 @@
+\section{Proof System for \GL}\label{Logic4Struct:sec:proofSys}
+
+% In a previous version of this
+% article \cite{Carbone2010Towards-a-Modal}, we showed that \GL is
+% undecidable for the global calculus with recursion, and
+Here we  present a
+model checking algorithm (in the form of a proof system) to decide
+when a global logic formula is satisfied by a recursion-free
+configuration of the global calculus. Indeed, similarly to
+\cite{ct:csl01}, it turns out that the logic is decidable on the
+recursion-free choreographies\footnote{As described in \cite{Carbone2010Towards-a-Modal}, removing recursion yields a
+  decidability result in \GL}. We also prove the soundness and
+completeness of the proposed proof system w.r.t.~the assertion
+semantics.
+
+In order to reason about judgments $\chor |=_\sigma \phi$, we propose
+a proof (or inference) system for assertions of the form $\chor
+|-_\sigma \phi$.  Intuitively, we want $\chor |-_\sigma \phi$ to be as
+approximate as possible to $\chor |=_\sigma \phi$ (ideally, they
+should be equivalent).  We write $\chor |-_\sigma \phi $ for the
+provability judgement where $(\sigma,\chor)$ is a configuration and
+$\phi$ is a formula.  
+
+\begin{notation}
+  We define the set of continuations, and the reachable set of
+  configurations from an source configuration  $(\sigma, \chor)$, after an action
+  $\ell$, as follows:
+  \begin{align*}
+    \textsf{Next}(\sigma,\chor,\ell) & \DEFEQ
+    \{(\sigma',\chor') \mid (\sigma,\chor) \action{\ell} (\sigma',\chor')\}
+    \\
+    \textsf{Reachable}(\sigma,\chor) & \DEFEQ
+    \{(\sigma',\chor') \mid (\sigma,\chor) \action{}^* (\sigma',\chor')\}
+    \, .
+  \end{align*}
+
+Normalisation is required by the proof system to infer equality of
+choreographies up to structural equi\-va\-len\-ce (Specially for the
+$[ \cdot ] \pp [ \cdot ]$ operator).
+
+  % We define $\textsf{Norm}(\chor)$ to be the normalisation of a
+%   recursion-free choreography $\chor$:
+ We define $\textsf{Norm}(\chor)$ to be a normalisation function from
+  recursion-free choreographies into multisets of choreographies:
+  \begin{align*}    
+    &\textsf{Norm}(\interact{A}{B}{k}{e}{y}\pfx \chor) \DEFEQ
+    [ \interact{A}{B}{k}{e}{y}\pfx \chor ]
+    \\
+    &\textsf{Norm}(\choice{A}{B}{k}{l}{\chor}) \DEFEQ
+    [ \choice{A}{B}{k}{l}{\chor} ]
+    \\
+    &\textsf{Norm}(\init{A}{B}{a}{k}\pfx \chor) \DEFEQ
+    [\init{A}{B}{a}{k}\pfx \chor]
+    \\
+    &\textsf{Norm}(\itn{e@A}{\chor_1}{\chor_2}) \DEFEQ
+    [\itn{e@A}{\chor_1}{\chor_2}]    
+    \\    
+    &\textsf{Norm}(\INACT) \DEFEQ {[} \ {]}
+    \\
+    &\textsf{Norm}(\chor_1 \pp \chor_2) \DEFEQ [
+    P_1,\dots,P_n,Q_1,\dots,Q_m ]
+    \quad \text{if }
+    \begin{array}{ll}
+      \textsf{Norm}(\chor_1) = [P_1,\dots,P_n] & \text{and} \\
+      \textsf{Norm}(\chor_2) = [Q_1,\dots,Q_m] & .
+    \end{array}
+  \end{align*}
+
+\end{notation}
+
+\begin{lemma}[Normalisation preserves structural equivalence]
+  \label{Logic4Struct:lem:normalisation}
+  Let $\chor$ be a recursion-free choreography and
+  $\textsf{Norm}(\chor) = [P_1,\dots,P_n]$, then $\chor \equiv
+  \prod_{i=1}^n P_i$.
+\end{lemma}
+\begin{proof}
+  By induction on the structure of the choreography $\chor$.
+   \begin{description}
+   \item[Case $\chor = \INACT$:] We have $\textsf{Norm}(\INACT) = [\
+     ]$, and $\prod_{i=1}^0 P_i = \INACT \equiv \INACT$.
+   \item[Case $\chor = \chor_1 \pp \chor_2$:] We have that
+     $\textsf{Norm}(\chor_1) = [P_1,\dots,P_n]$,
+     $\textsf{Norm}(\chor_2) = [Q_1,\dots,Q_m]$, and $\prod_{i=1}^n P_i
+     \equiv \chor_1$, $\prod_{j=1}^m Q_j \equiv \chor_2$ by induction
+     hypothesis. Then, we can derive that $\prod_{i=1}^n P_i \pp
+     \prod_{j=1}^m Q_j \equiv \chor_1 \pp \chor_2$.
+   \item[All the other cases:] We have that
+     $\textsf{Norm}(\chor) = [P_1]$, where $P_1 = \chor$, then
+     $\prod_{i=1}^1 P_i \equiv \chor$. 
+   \end{description}
+\end{proof}
+
+\begin{definition}[Entailment]
+  We say that a choreography $\chor$ \emph{entails} a formula $\phi$
+  under a state $\sigma$, written $\chor|-_\sigma \phi$, iff the
+  assertion $\chor|-_\sigma \phi$ has a proof in the proof system
+  given in Table~\ref{Logic4Struct:table:Global:proofSys}.
+\end{definition}
+
+\begin{table}
+  \begin{gather*}
+    \myruleg{P_{end}}{\textsf{Norm}(\chor) = [\ ]}
+    {\typeruleE{\chor}{\sigma}{\endF}}
+    ~
+    \myruleg{P_{and}}{\typeruleE{\chor}{\sigma}{\phi} \quad
+      \typeruleE{\chor}{\sigma}{\chi}} {\typeruleE{\chor}{\sigma}{\phi
+        \land \chi}}
+    ~
+    \myruleg{P_{neg}}{ \chor \not |-_{\sigma} \phi}
+    {\typeruleE{\chor}{\sigma}{\neg \phi}}
+    ~
+    \myruleg{P_{may}}{\exists (\sigma',\chor') \in
+      \textsf{Reachable}(\sigma,\chor).\  \typeruleE{\chor'}{\sigma'}{\phi}}
+    {\typeruleE{\chor}{\sigma}{\may \phi}}
+    \\[1ex]
+    \myruleg{P_{par}}{ \begin{matrix}[c]
+        \textsf{Norm}(\chor) = [P_1,\dots,P_n] \\
+        \exists I,J.\
+        I\cup J = \{1,\dots,n\} \wedge
+        I\cap J = \emptyset \wedge
+        \typeruleE{\prod_{i\in I} P_i}{\sigma}{\phi_1} \wedge
+        \typeruleE{\prod_{j\in J} P_j}{\sigma}{\phi_2} \end{matrix}
+     }
+    {\typeruleE{\chor}{\sigma}{ \phi_1 \pp \phi_2}}
+  \\[1ex]
+    \myruleg{P_{\exists}}
+    {\exists w\in fn(\chor)\cup fn(\phi).\ 
+      \typeruleE{\chor}{\sigma}{\phi[w/\var]}}
+    {\typeruleE{\chor}{\sigma}{\exists \var \pfx \phi}}
+    \qquad\qquad
+    \myruleg{P_{exp}}{
+      \sigma(e_1 @ A) \Downarrow v \quad \sigma(e_2 @ B) \Downarrow v}
+    {\typeruleE{\chor}{\sigma}{ (e_1 @ A = e_2 @ B) }}
+    \\[1ex]
+    \myruleg{P_{action}}{\exists (\sigma',\chor') \in
+      \textsf{Next}(\sigma,\chor,\ell).\  \typeruleE{\chor'}{\sigma'}{\phi}}
+    {\typeruleE{\chor}{\sigma}{\langle\ell \rangle \phi}}
+  \end{gather*}
+  \caption{Proof system for the Global Calculus.}
+  \label{Logic4Struct:table:Global:proofSys}
+\end{table}
+
+Let us now describe some of the inference rules of the proof system.
+The rule $\mathsf{P_{end}}$ relates the inaction terms with the
+termination formula. The rules $\mathsf{P_{and}}$ and
+$\mathsf{P_{neg}}$ denote rules for conjunction and negation in
+classical logic, respectively. The rule for parallel composition is
+represented in $\mathsf{P_{par}}$; it does not indicate the behaviour
+of a given choreography, but but provides information about the
+structure of the process: $\mathsf{P_{par}}$ juxtaposes the behaviour
+of two processes and combines their respective formulae by the use of
+a separation operator. The next rule, $\mathsf{P_{action}}$ requires
+that the process $P$ in the configuration $\sigma$ can perform an
+action labelled $\ell$, so we must search for a continuations of
+$(\sigma,\chor)$ after an action $\ell$ and find a configuration which
+satisfies the rest of the formula, i.e., $\phi$.  Analogously,
+$\mathsf{P_{may}}$ looks for a continuation in the reachable
+configuration of $(\sigma,\chor)$ in order to satisfy $\phi$.  The rule
+$\mathsf{P_\exists}$ says that in order to satisfy an $\exists t\pfx
+\phi$, it is sufficient to find a value $w$ for $t$ in the free names
+used by the choreography $\chor$ or in the free names used by the
+formula $\phi$. Finally, the rule $\mathsf{P_{exp}}$ denotes
+evaluation of expressions.
+
+We now proceed to prove the soundness of the proof system with respect
+to the semantics of assertions presented before.
+
+\begin{lemma}[Structural congruence preserves satisfiability]
+  \label{Logic4Struct:lemma:StructuralSatisfiability} If $\chor\equiv\chor'$ and
+  $\chor|=_\sigma \phi$, then $\chor' |=_\sigma \phi$.
+\end{lemma}
+\begin{proof}
+    It follows by induction on the structural congruence rules in
+    $\equiv$ and second induction on the height of the derivation tree
+    for   $\chor|=_\sigma \phi$.
+    % It follows from simple case analysis over $\equiv$.
+    We have the following cases:
+   \begin{description}
+   	\item[Case $P' \equiv P \pp \INACT$:]
+		We have that  $P |=_\sigma \phi$ and $P \equiv P \pp \INACT $. By the definition of $|=$, 
+		$P' |=_\sigma \phi \pp \psi$ iff $P' \equiv P \pp Q$, $P |=_\sigma \phi$ and $Q |=_\sigma \psi$. 
+		Substituting $Q$ with $\INACT$, we have that $P' |=_\sigma \phi \pp \true$, that implies $P' |=_\sigma \phi$
+	\item[Cases $P \pp Q \equiv Q \pp P$, $P \pp (Q \pp R) \equiv
+          (P \pp Q) \pp R$ and $P \equiv_\alpha P'$:] They are
+          straight-forward  as $\pp$ is commutative and associative in \GL and variable substitution does not affect provability.
+%	\item[Case $P \equiv_\alpha P'$:]
+   \end{description}
+\end{proof}
+
+
+\begin{theorem}[Soundness]\label{Logic4Struct:thm:soundness}
+  For any configuration $(\sigma,\chor)$, where $\chor$ is
+  recursion-free, and every formula $\phi$, if $\chor|-_\sigma \phi$
+  then $\chor|=_\sigma \phi$.
+\end{theorem}
+\begin{proof}
+The proof proceeds by induction on the height of the derivation tree
+for $|-_\sigma$.
+  \begin{description}
+  \item[Case $\mathsf{P_{end}}$:] Straight consequence of
+    Lemmas~\ref{Logic4Struct:lem:normalisation} and
+    \ref{Logic4Struct:lemma:StructuralSatisfiability}, indeed $\chor \equiv \INACT$
+    and $\chor |=_\sigma \endT$.
+  \item[Case $\mathsf{P_{and}}$:] By induction hypothesis and
+    conjunction.
+  \item[Case $\mathsf{P_{neg}}$:] We have that $\chor|-_\sigma \lnot
+    \phi$, so by $\mathsf{P_{neg}}$ we get $\chor \not |-_\sigma
+    \phi$. By induction hypothesis we have that $\chor \not |=_\sigma
+    \phi$, which is the necessary condition to deduce $\chor |=_\sigma
+    \lnot \phi$.
+  \item[Case $\mathsf{P_{par}}$:] We have that $\chor |-_\sigma
+    \phi_1\pp \phi_2$, then $\textsf{Norm}(\chor) = [P_1,\dots,P_n]$,
+    and there exist $I,J$ such that $I\cup J = \{1,\dots,n\}$, $I\cap J
+    = \emptyset$, $\typeruleE{\prod_{i\in I} P_i}{\sigma}{\phi_1}$, and
+    $\typeruleE{\prod_{j\in J} P_j}{\sigma}{\phi_2}$. By induction
+    hypothesis we know that $\prod_{i\in I} P_i |=_\sigma \phi_1$ and
+    $\prod_{j\in J} P_j |=_\sigma \phi_2$, then by
+    Lemma~\ref{Logic4Struct:lem:normalisation} we have $\chor \equiv \prod_{i\in I}
+    P_i \pp \prod_{j\in J} P_j$, hence it is immediate to prove that
+    $\chor |=_\sigma \phi_1 \pp \phi_2$.
+  \item[Case $\mathsf{P_{action}}$:] We have that $\chor |-_\sigma
+    \langle \ell \rangle \phi$ and by $\mathsf{P_{action}}$ then
+    $\chor' |-_{\sigma'} \phi$ and $(\sigma', \chor') \in
+    \textsf{Next}(\sigma, \chor, \ell)$. From the induction hypothesis
+    we have that $\chor' |=_{\sigma'} \phi$, then we have to show that
+    $\chor |=_\sigma \actionF{\ell} \phi$. From the assertion
+    semantics we know that $C |=_\sigma \actionF{\ell} \phi$ iff
+    $(\sigma, \chor') \action{\ell} (\sigma', \chor')$ and $\chor'
+    |=_{\sigma'} \phi$, which holds immediately by the selection of
+    $(\sigma', \chor') \in \textsf{Next}(\sigma, \chor,\ell)$ and the
+    induction hypothesis.
+  \item[Case $\mathsf{P_{may}}$:] We have that $\chor |-_\sigma \may
+    \phi$ and by $\mathsf{P_{may}}$ then $\chor' |-_{\sigma'} \phi$ and
+    $(\sigma', \chor') \in \textsf{Reachable}(\sigma, \chor)$. From the
+    induction hypothesis we have that $\chor' |=_{\sigma'} \phi$, then
+    we have to show that $\chor |=_\sigma \may \phi$. From the
+    assertion semantics we know that $C |=_\sigma \may \phi$ $ \iff
+    (\sigma, \chor') \action{} ^* (\sigma', \chor')$ and $\chor'
+    |=_{\sigma'} \phi$, which holds immediately by the selection of
+    $(\sigma', \chor') \in \textsf{Reachable}(\sigma, \chor)$ and the
+    induction hypothesis.
+  \item[Case $\mathsf{P_{\exists}}$:] We have that $\chor |-_\sigma
+    \exists t. \phi$ and by $\mathsf{P_{\exists}}$ we have that
+    $\exists w \in fn(\chor) \cup fn(\phi)$ and $\chor |-_\sigma \phi
+    [w/t]$. By induction hypothesis we know that $C |=_\sigma \phi
+    [w/t]$ with appropriate $w \in fn(\chor) \cup fn(\phi)$, then
+    $\chor |=_\sigma \exists t. \phi$ follows from the definition of
+    the assertion semantics.
+  \item[Case $\mathsf{P_{exp}}$:] It holds directly by checking if
+    $\sigma(e_1@A) \Downarrow v$ and $\sigma(e_2@B) \Downarrow
+    v$. 
+  \end{description}
+\end{proof}
+
+The proof of completeness relies on a renaming lemma, that states that
+logical properties are preserved over name permutations. These kind of
+lemmas are standard among logical frameworks for process calculi
+(e.g. \cite{cg:popl00,DBLP:conf/cmsb/MiculanB06}) and the general
+  proof technique proceeds by induction on the syntax of formulae.
+
+
+\begin{lemma}[Renaming preserves satisfiability]\label{Logic4Struct:lem:exists}
+  Let $(\sigma,\chor)$ be a configuration with $\chor$ a recursion
+  free choreography and a state $\sigma$. Let $\{n_1,\dots,n_k\}
+  = fn(\chor) \cup fn(\phi)$. We can state that given  a formula $\phi$, $\chor |=_\sigma \exists t\pfx
+  \phi$ if and only if $\exists m\in \{n_1,\dots,n_k\}$ such that $\chor
+  |=_\sigma \phi[m/t]$.
+\end{lemma}
+\begin{proof}
+  Both directions are proven via induction on the structure of
+  $\phi$. We include some of the most relevant cases:
+  \begin{description}
+    \item[Case  $\phi = \phi_1 \pp \phi_2 $:] \hfill 
+          \begin{description}
+            \item[($=>$ side):] \hfill \\
+              Given that $\chor |=_\sigma \exists t\pfx \phi_1 \pp
+              \phi_2$ then $\chor \equiv \chor_1 \pp \chor_2$ and
+              $\chor_1 |=_\sigma \exists t \pfx \phi_1 $ and $\chor_2
+              |=_\sigma \exists t \pfx \phi_2$. We have to show that
+              $\exists m \in fn(\chor) \cup fn(\phi_1 \pp \phi_2)$
+              such that $\chor |=_\sigma (\phi_1 \pp \phi_2)[m/t]$.
+
+              From the definition of $\phi$ and the induction
+              hypothesis, we have that: 
+              \begin{equation}
+                \exists m \in fn(\chor_1) \cup
+              fn(\phi_1) \text{ such that } \chor_1 |=_\sigma
+              \phi_1[m/t]
+              \end{equation} 
+              Similarly, we know that 
+              \begin{equation}
+                \exists m \in
+              fn(\chor_2) \cup fn(\phi_2) \text{ such that } \chor_2
+              |=_\sigma \phi_2[m/t]
+              \end{equation} 
+              Note that, from $\chor \equiv
+              \chor_1 \pp \chor_2$ we can infer that $fn(\chor) =
+              fn(\chor_1) \cup fn(\chor_2).$, and from $\phi = \phi_1
+              \pp \phi_2$. Then, $\exists m \in fn(\chor) \cup
+              fn(\phi) $ such that $\chor  |=_\sigma (\phi_1 \pp
+              \phi_2)[m/t]$.
+
+              \item[($<=$ side):] \hfill \\
+                Pick an $m$ such that $m \in fn(\chor) \cup
+                fn(\phi_1 \pp \phi_2)$ and $\chor |=_\sigma (\phi_1
+                \pp \phi_2)[m/t]$. we have to show that $\chor
+                |=_\sigma \exists t\pfx (\phi_1 \pp \phi_2)$.
+
+                From the assertion semantics, $\chor |=_\sigma
+                (\phi_1 \pp \phi_2)[m/t]$ iff $\chor \equiv \chor_1
+                \pp \chor_2$ and $\chor_1 |=_\sigma \phi_1[m/t]$ and
+                $\chor_2 |= \phi_2 [m/t]$. 
+
+                Now assume the induction hypothesis  $\chor_1 |=_\sigma
+                \exists t \pfx \phi_1$ and $\chor_2 |= \exists t \pfx
+                \phi_2$. Note  that $fn(\chor) \cup fn(\phi_1 \pp
+                \phi_2) = fn(\chor_1) \cup fn(\chor_2) \cup fn(\phi_1
+                \cup fn(\phi_2))$. Then, applying the induction hypothesis, we can
+                conclude that $\chor |=_\sigma \exists t \pfx (\phi_1
+                \pp \phi_2)$.
+           \end{description}
+      \item[Case $\phi = \actionF{\ell}\phi' $:] \hfill 
+        \begin{description}
+          \item[($=>$ side):] \hfill \\
+            Given that $\chor |=_\sigma \exists t \pfx \actionF{\ell}
+            \phi'$, then $\chor |=_\sigma \actionF{\ell}
+            \phi'[m/t]$. Applying the definition in the assertion
+            semantics, $(\sigma, \chor[m/t]) \action{\ell[m/t]}
+            (\sigma',\chor'[m/t])$.  We have to show that $\exists m
+            \in fn(\chor) \cup fn(\actionF{\ell}\phi')$ such that $\chor
+            |=_\sigma \actionF{\ell} \phi'[m/t]$.
+
+            We consider two cases for $m$: 1) $m \in fn(\chor') \cup
+            fn(\phi') $, then after direct application of the
+            induction hypothesis $C' |=_{\sigma'} \phi'[m/t]$ we get
+            $\chor |=_\sigma \actionF{\ell} \phi'[m/t]$. 2)  In the
+            case that $m \in (fn(\chor) \cup
+            \fn(\actionF{\ell}\phi'))/(fn(\chor') \cup fn(\phi'))$.
+            We know  that $fn(\chor') \subseteq \fn(\chor)$ and
+            $\fn(\actionF{\ell} \phi') = fn(\phi')$. Then $m \in
+            fn(\chor)/fn(\chor')$. From the application of  the  induction hypothesis
+            $\chor'[m/t] |=_{\sigma'} \phi'[m/t]$ to  $\chor |=_\sigma \actionF{\ell} \phi'[m/t]$, we have that $\chor[m/t]
+            |=_\sigma \actionF{\ell[m/t]}\phi'[m/t]$ implying 
+            $\chor[m/t] |=_\sigma \actionF{\ell} \phi[m/t]$, 
+            %, and given
+%             $fn(\chor) = fn(\chor[m/t]) $
+             then $\chor |=_\sigma
+            \actionF{\ell} \phi'[m/t]$.
+
+            \item[($<=$ side):] \hfill\\
+              Pick $m \in fn(\chor) \cup fn(\actionF{\ell} \phi')$
+              such that $\chor |=_\sigma \actionF{\ell}
+              \phi'[m/t]$. We have to show that $\chor |=_\sigma
+              \exists t \pfx \actionF{\ell} \phi'$.
+
+              From the induction hypothesis, we have that $\chor'
+              |=_{\sigma'} \phi'[m/t]$, which implies $\chor'
+              |=_{\sigma'} \exists t \pfx \phi'$. Note that
+              $fn(\chor') \cup fn(\phi') \subseteq fn(\chor) \cup
+              fn(\actionF{\ell} \phi')$, then $\chor |=_\sigma \exists
+              t \pfx \actionF{\ell} \phi$.
+          \end{description}
+        \item[Case $\phi = \exists t' \pfx \phi' $:] \hfill 
+        \begin{description}
+          \item[($=>$ side):] \hfill \\
+            $\chor |=_\sigma \exists t. \exists t' \phi'$ then $\chor
+            |=_\sigma (\exists t'. \phi')[m/t]$. We have to show that
+            $\exists m \in fn(\chor) \cup fn(\exists t'. \phi')$ such
+            that $\chor |=_\sigma (\exists t'. \phi')[m/t]$. From the
+            the assertion semantics, we have that $\chor
+            |=_\sigma \exists t \pfx \phi'[m/t] <=> \chor |=_\sigma \phi'[m'/t'][m/t]$. Select a name $m$, and use $\alpha-$conversion to
+            ensure that $\sigma$ leaves unchanged all bound variables
+            in the choreography $\chor$ and the formula $\phi'$.  Then $m \neq m'$ and
+            $\chor |=_\sigma \phi[m'/t'][m/t]$. From the induction
+            hypothesis we know that $m' \in fn(\chor) \cup fn(\exists
+            t'. \phi')$ such that $\chor |=_\sigma \phi[m'/t']$. Given
+            $fn(\exists t. \exists t' \phi') = fn(\exists t'. \phi')
+            \cup t$, then $\chor |=_\sigma \phi'[m'/t'][m/t]$.
+            \item[($<=$ side):] \hfill\\
+              Pick a name $n \in fn(\chor) \cup fn(\exists x. \phi)$
+              such that $\chor |=_\sigma \exists x . \phi'[m'/m]$. We use $\alpha-$conversion to
+            ensure that $\sigma$ leaves unchanged all bound variables
+            in the choreography $\chor$ and the formula $\phi'$.  We have to show that $\chor |=_\sigma \exists
+              x. \exists m. \phi'$. After $\alpha$-renaming, we have to consider the possible
+              selections of $n$.
+              \begin{description}
+                \item[($n\neq m' \land n\neq m$):] We have that $\chor
+                  |=_\sigma \phi' [m'/m][n/x]$. Since $n\neq m'$ then
+                  $\phi[m'/m][n/x] = \phi' [n/x][m'/m]$. Since $n\neq
+                  m$ then $m' \not \in fn(\chor) \cup fn(\phi'[n/x])$
+                  therefore $m' \in fn(\chor) \cup fn(\exists x. \phi' )$,
+                  and  $\chor |=_\sigma \exists x. \exists m .
+                  \phi'$.
+                  \item[($n\neq m' \land n=m$):] We have that $\chor
+                    |=_\sigma \phi'[m'/m][m/x]$. Since $n =m$ then
+                    $\phi'[m'/m][m/x] = \phi'[m'/x]$. Then, $m' \in
+                    fn(\chor) \cup fn(\exists m. \phi')$  and,
+                    applying the induction hypothesis $\chor |=_\sigma \exists
+                    m \pfx \phi'$ leads to  $\chor |=_\sigma \exists x. \exists m
+                    \pfx \phi' \land x = m$.
+%                     ..... $\exists x \pfx \exists m \pfx \phi'$. From $n \neq
+%                     m'$ then $m' \in fn(\chor) \cup fn(\exists m. \phi')$
+                \end{description}
+          \end{description}
+   \end{description}
+%   (Sketch) By induction on the structure of $\phi$.  It is similar to
+%   the proof of \cite[Lemma~5.3(3)]{cg:popl00}.
+\end{proof}
+
+\begin{theorem}[Completeness]\label{Logic4Struct:thm:completeness}
+  For any configuration $(\sigma,\chor)$, where $\chor$ is
+  recursion-free, and every formula $\phi$, if $\chor|=_\sigma \phi$
+  then $\chor|-_\sigma \phi$.
+\end{theorem}
+\begin{proof}
+  By rule induction on the derivation of $|=_\sigma$.
+   \begin{description}
+   \item[Case $\chor |=_\sigma \endT$:] We have that $\chor \equiv
+     \INACT$ and hence $\textsf{Norm}(\chor) = [\ ]$ by
+     Lemma~\ref{Logic4Struct:lem:normalisation}. Now, the thesis follows immediately
+     from the application of $ \mathsf{P_{end}}$.
+   \item[Case $\chor |=_\sigma (e_1 @ A = e_2 @ B)$:] It follows
+     immediately by the application of $\mathsf{P_{exp}}$.
+   \item[Case $\chor |=_\sigma \langle \ell \rangle \phi'$:] Take
+     $(\sigma, \chor) \action{\ell} (\sigma',\chor')$ and $\chor'
+     |=_{\sigma'} \phi' $, we have by induction hypothesis that
+     $\typeruleE{\chor'}{\sigma'}{\phi'}$. Now, we have to show that
+     $\chor |-_\sigma \langle \ell \rangle \phi'$.  By the fact that
+     $(\sigma, \chor) \action{\ell} (\sigma',\chor')$, we have that
+     $(\sigma', \chor')\in \textsf{Next}(\sigma,\chor,\ell)$, hence, we
+     can apply rule $\mathsf{P}_{action}$ and we are done.
+   \item[Case $\chor |=_\sigma \phi \land \chi$:] We have that $\chor
+     |=_\sigma \phi$ and $\chor |=_\sigma \chi$. From the induction
+     hypothesis we have that $\chor |-_\sigma \phi$ and $ \chor
+     |-_\sigma \chi$. The application of $\mathsf{P_{and}}$ lead to
+     $\chor |-_\sigma \phi \land \chi$ as desired.
+   \item[Case $\chor |=_\sigma \lnot \phi$:] From the definition of the
+     assertion semantics we have that $\chor |=_\sigma \lnot \phi $ iff
+     $\chor \not |=_\sigma \phi$. We have to show that $\chor |-_\sigma
+     \lnot \phi$. We proceed by contradiction. Take a $(\phi, \chor)$
+     such that $\chor |-_\sigma \phi$, then from
+     Theorem~\ref{Logic4Struct:thm:soundness} we have that $\chor |=_\sigma \phi$,
+     which is a contradiction to $\chor |=_\sigma \lnot \phi$.
+   \item[Case $\chor |=_\sigma \exists \var \pfx \phi$:] We have that
+     $\chor |=_\sigma \exists t. \phi$ and by the definition in the
+     assertion semantics we have that $\chor |=_\sigma \phi [w/t]$ for
+     an appropriate $w$. By induction hypothesis we know that $\chor
+     |-_\sigma \phi[w/t]$. Lemma~\ref{Logic4Struct:lem:exists} guarantees that there
+     exists $w \in fn(\chor)\cup fn(\phi)$ in order to derive $\chor
+     |-_\sigma \exists t. \phi$ from $\mathsf{P_{\exists}}$.
+   \item[Case $\chor |=_\sigma <<>> \phi$:] Take $(\sigma, \chor)
+     \action{}^* (\sigma',\chor')$ and $\chor' |=_{\sigma'} \phi'$, we
+     have by induction hypothesis that
+     $\typeruleE{\chor'}{\sigma'}{\phi'}$. Now, we have to show that
+     $\chor |-_\sigma <<>> \phi'$.  By the fact that $(\sigma, \chor)
+     \action{}^* (\sigma',\chor')$, we have that $(\sigma', \chor')\in
+     \textsf{Reachable}(\sigma,\chor)$, hence, we can apply rule
+     $\mathsf{P}_{may}$ and we are done.
+   \item[Case $\chor |=_\sigma \phi \pp \chi$:] We have that $\chor
+     \equiv \chor_1 \pp \chor_2$ and $\chor_1 |=_\sigma \phi \land
+     \chor_2 |=_\sigma \chi$. From the induction hypothesis $\chor_1
+     |-_\sigma \phi$ and $\chor_2 |-_\sigma \chi$. Now by
+     Lemma~\ref{Logic4Struct:lem:normalisation} we have that $\chor_1 \equiv
+     \prod_{i\in I} P_i$ and $\chor_2 \equiv \prod_{j\in J} P_j$ for
+     some $I,J$. So, we can derive $\chor \equiv \prod_{i\in I} P_i \pp
+     \prod_{j\in J} P_j$, and hence $\mathsf{P_{par}}$ leads to
+     $\chor_1 \pp \chor_2 |-_\sigma \phi \pp \chi$. 
+   \end{description} 
+\end{proof}
+
+\begin{theorem}[Termination]\label{Logic4Struct:thm:termination}
+  For any configuration $(\sigma,\chor)$, where $\chor$ is
+  recursion-free, and every formula $\phi$, proof-checking algorithm
+  terminates.
+\begin{proof}
+  First, notice that all the functions \textsf{Norm}, \textsf{Next},
+  and \textsf{Reachable} are total and computable. The proof is by
+  induction over the structure of $\phi$.
+   \begin{description}
+   \item[Case $\phi = \endT$:] $\typeruleE{\chor}{\sigma}{\endT}$ iff
+     $\textsf{Norm}(\chor) = [\ ]$.
+   \item[Case $\phi = \phi_1 \land \phi_2$:] By conjunction and
+     induction hypothesis on $\typeruleE{\chor}{\sigma}{\phi_1}$ and
+     $\typeruleE{\chor}{\sigma}{\phi_2}$.
+   \item[Case $\phi = \neg \phi'$:] $\typeruleE{\chor}{\sigma}{\phi}$
+     iff $\typeruleE{\chor}{\sigma}{\phi'}$ does not hold. But by
+     induction hypothesis we can construct a terminating proof or
+     confutation for $\typeruleE{\chor}{\sigma}{\phi'}$. Hence the proof
+     for $\typeruleE{\chor}{\sigma}{\phi}$ terminates as well.
+   \item[Case $\phi = \phi_1 \pp \phi_2$:] Suppose
+     $\textsf{Norm}(\chor) = [P_1,\dots,P_n]$. Notice that there exists
+     a finite number of possible partitions of the index set
+     $\{1,\dots,n\}$ as 
+     $I \cup ,J$. Hence, for every $I \in ,J$ we can compute
+     $\typeruleE{\prod_{i\in I} P_i}{\sigma}{\phi_1}$ and
+     $\typeruleE{\prod_{j\in J} P_j}{\sigma}{\phi_2}$, which both
+     terminate by induction hypothesis. By applying
+     Lemma~\ref{Logic4Struct:lem:normalisation} we prove the thesis.
+   \item[Case $\phi = \langle \ell \rangle \phi'$:] First, notice that
+     the set $\textsf{Next}(\sigma,\chor,\ell)$ is finite, because the
+     choreographies are finite, i.e., there are a finite number of
+     actionable transition in a given configuration. For each
+     configuration $(\sigma',\chor') \in
+     \textsf{Next}(\sigma,\chor,\ell)$,
+     $\typeruleE{\chor'}{\sigma'}{\phi'}$ terminates by induction
+     hypothesis.
+   \item[Case $\phi = <<>> \phi'$:] As before, notice that the set
+     $\textsf{Reachable}(\sigma,\chor)$ is finite, because the
+     choreographies are finite, i.e., the choreographies are recursion
+     free. For each configuration $(\sigma',\chor') \in
+     \textsf{Reachable}(\sigma,\chor)$,
+     $\typeruleE{\chor'}{\sigma'}{\phi'}$ terminates by induction
+     hypothesis.
+   \item[Case $\phi = \exists t\pfx \phi'$:] To prove existence is
+     sufficient to check every derivation by substituting $t$ with a
+     name $w\in fn(\chor)\cup fn(\phi)$. Notice that $fn(\chor) \cup
+     fn(\phi)$ is finite, because both $\chor$ and $\phi$ are so. So,
+     for every $w$, we can construct a terminating derivation for
+     $\typeruleE{\chor}{\sigma}{\phi'[w/t]}$ by induction hypothesis.
+   \item[Case $\phi = (e_1@A = e_@@B):$]
+     $\typeruleE{\chor}{\sigma}{(e_1@A = e_@@B)}$ iff $e_1@A \Downarrow
+     v$ and $e_@@B \Downarrow v$.  
+   \end{description}
+\end{proof}
+\end{theorem}
+
+
+
+% \section{Proof System}\label{Logic4Struct:sec:proofSys}
+% %
+% In this section we present a proof system for the global logic.  In
+% order to reason about judgments $\chor |=_\sigma \phi$, we propose a
+% proof (or inference) system for assertions of the form $\chor
+% |-_\sigma \phi$. Intuitively, we want $\chor |-_\sigma \phi$ to be as
+% approximate as possible to $\chor |=_\sigma \phi$ (ideally, they
+% should be equivalent). We write $\chor |-_\sigma \phi $ for the
+% provability judgement where $(\sigma,\chor)$ is a configuration and
+% $\phi$ is a formula.
+
+% \begin{definition}[Exhibition - Choreography]
+%   We say that a choreography $\chor$ \emph{exhibits} a formula $\phi$
+%   under an environment $\sigma$, written $\chor|-_\sigma \phi$, iff
+%   the assertion $\chor|-_\sigma \phi$ has a proof in the proof system
+%   given in Table~\ref{Logic4Struct:table:Global:proofSys}.
+% \end{definition}
+% %
+% \begin{table}[t]
+%   \begin{align*}
+%     & \myruleg{P_{init}}{\typeruleE{\chor}{\sigma}{\phi}}
+%     {\typeruleE{\init{A}{B}{a}{k} \pfx \chor} {\sigma}{\langle
+%         \initF{A}{B}{a(k)}\rangle\phi}} \qquad
+%     \myruleg{P_{and}}{\typeruleE{\chor}{\sigma}{\phi} \quad
+%       \typeruleE{\chor}{\sigma}{\chi}} {\typeruleE{\chor}{\sigma}{\phi
+%         \land \chi}}
+%     \\[1mm]
+%     & \myruleg{P_{sel}}{\typeruleE{\forall i\in I.\
+%         \chor_i}{\sigma}{\phi_i}} {\typeruleE{
+%         \choice{A}{B}{k}{l}{\chor}}{\sigma}{\bigwedge_{i\in I} \langle
+%         \branchF{A}{B}{l_i}{k}\rangle \phi_i}} \qquad
+%     \myruleg{P_{neg}}{ \chor \not |-_{\sigma} \phi}
+%     {\typeruleE{\chor}{\sigma}{\neg \phi}}
+%     \\[1mm]
+%     & \myruleg{P_{com}}{\typeruleE{\chor}{\sigma}{\phi}}
+%     {\typeruleE{\interact{A}{B}{k}{e}{y}\pfx \chor }
+%       {\sigma}{\langle\comF{A}{B}{k}\rangle \phi}} \qquad
+%     \myruleg{P_{par}}{\typeruleE{\chor_1}{\sigma}{\phi_1} \quad
+%       \typeruleE{\chor_2}{\sigma}{\phi_2}} {\typeruleE{\chor_1 \pp
+%         \chor_2}{\sigma}{ \phi_1 \pp \phi_2}}
+%     \\[1mm]
+%     & \myruleg{P_{end}}{} {\typeruleE{ \INACT }{\sigma}{\endF}} \quad
+%     \myruleg{P_{may1}}{ \typeruleE{\chor}{\sigma}{\phi}}
+%     {\typeruleE{\chor}{\sigma}{\may \phi}} \quad \myruleg{P_{may2}}{
+%       \typeruleE{\chor}{\sigma}{\phi \lor \nextOp \may \phi}}
+%     {\typeruleE{\chor}{\sigma}{\may \phi}} \quad \myruleg{P_{exp}}{
+%       \sigma(e_1) \Downarrow v \quad \sigma(e_2) \Downarrow v}
+%     {\typeruleE{\chor}{\sigma}{ (e_1 = e_2) }}
+%     \\[1mm]
+%     & \myruleg{P_{ifT}}{\sigma(e@A) \Downarrow \true \quad
+%       \typeruleE{\chor_1}{\sigma}{\phi}} {\typeruleE{ \itn
+%         {e@A}{\chor_1}{\chor_2} }{\sigma}{\phi}} \qquad
+%     \myruleg{P_{ifF}}{\sigma(e@A) \Downarrow \false \quad
+%       \typeruleE{\chor_2}{\sigma}{\phi}} {\typeruleE{ \itn
+%         {e@A}{\chor_1}{\chor_2} }{\sigma}{\phi}}
+%     \\[1mm]
+%     & \myruleg{P_{\exists}}{\exists w\in fn(\chor) \cup \{k\}.\
+%       \typeruleE{\chor}{\sigma}{\phi[w/\var]} ~\text{ $k$ fresh}}
+%     {\typeruleE{\chor}{\sigma}{\exists \var \pfx \phi}} \qquad
+%     \myruleg{P_{struct}}{\typeruleE{\chor}{\sigma}{\phi} \quad
+%       \chor\equiv \chor'} {\typeruleE{\chor'}{\sigma}{\phi}}
+%     % &
+%     % \myruleg{P_{var}}{ \mathbf{-} } {\typeruleE{ X }{}{\phi}}
+%     % \qquad
+%     % \myruleg{P_{rec}}{\typeruleE{C\MSUBS{\mu X.C}{X}}{}{\phi} }
+%     % {\typeruleE{ \mu X\pfx C }{}{ \phi }}
+%  \end{align*}
+%  \caption{Proof system for the Global Calculus.}
+%  \label{Logic4Struct:table:Global:proofSys}
+% \end{table}
+
+% \marginpar{Change the description aside accordingly to the change done
+%   to the proof system} Let us now describe some of the inference rules
+% of the proof system.  Any configuration satisfies $\mathsf{P_{true}}$.
+% %$\mathsf{P_{var}}$ is the standard rule for recursion variables.
+% The rule $\mathsf{P_{sel}}$ can be explained as follows: suppose we
+% are given a process $P = \choice{A}{B}{k}{l}{\chor}$, a set of branch
+% labels $\{l_i \, | \, i \in I\} $ (determined by typing) and we are
+% given a proof that each $\chor_i$ satisfies $\phi_i$, then we
+% certainly have a proof saying that every derivation of $P$ should
+% satisfy a guard $l_i$ followed by a formula $\phi_i$.  The initiation
+% and interaction rule $\mathsf{P_{init}, P_{com}}$ behave similarly to
+% $\mathsf{P_{sel}}$: given an initiation/communication process in $P$
+% and a proof that its continuation satisfies the proof term $\phi$, we
+% can derive a proof that $P$ will first exhibit an
+% initiation/communication action followed by $\phi$. The conditional
+% rule $\mathsf{P_{if}}$ is standard. The subsumption rule
+% $\mathsf{P_{sub}}$ is the standard consequence rule as found in Hoare
+% logic.
+% % and the rule $\mathsf{P_{rec}}$ just indicates that the formula
+% % $\phi$ satisfied by a recursion will be also satisfied by its
+% % unfolding.
+
+% The rules for parallel composition and hiding are represented in
+% $\mathsf{P_{par}}$ and $\mathsf{P_{res}}$ respectively, and they do
+% not indicate the behaviour of a given choreography, but hint
+% information about the structure of the process: $\mathsf{P_{par}}$
+% juxtaposes the behaviour of two processes and combines their
+% respective formulae by the use of a separation operator;
+% $\mathsf{P_{res}}$ hides a variable $x$ in a formula $\phi$: The
+% intuition is that since $\new x \chor$ is a choreography $\chor$ with
+% $x$ restricted, if $\chor$ proves $\phi$ and $x$ is a fresh variable
+% then $\new x \chor$ should satisfy $\phi$ with hidden $x$.
+
+% We now proceed to prove the soundness of the proof system with respect
+% to the semantics of assertions presented before.
+
+% % \begin{lemma}[Monotonicity] \label{Logic4Struct:lemma:monotonicity} If $C --> C'$
+% %   and $C' |=_\sigma \phi'$, then $C |=_\sigma \phi$ and $\phi \supset \phi'$.
+% % \end{lemma}
+% % \begin{proof}
+% %   We have to proceed by induction on the structure of $-->$. I have
+% %   not checked the details, and probably a discussion on this would
+% %   be good (I don't think monotonicity is a good name for this?)
+% % \end{proof}
+
+
+% \begin{lemma}[Structural congruence preserves validity]
+%   \label{Logic4Struct:lemma:StructuralLogic} If $\chor\equiv\chor'$ and
+%   $\chor|-_\sigma \phi$, then $\chor' |-_{\sigma'} \phi$ and $\sigma
+%   \subseteq \sigma'$.
+% \end{lemma}
+% \begin{proof}
+%   It follows trivially from the rule $\mathsf{P_{struct}}$.
+% \end{proof}
+
+% \marginpar{adapt the following proofs to the new proof system}
+% \begin{theorem}[Soundness]\label{Logic4Struct:thm:soundness}
+%   For any choreography $\chor$, if $\chor|-_\sigma \phi$ then
+%   $\chor|=_\sigma \phi$.
+% \end{theorem}
+% \begin{proof}
+%   It follows by induction on the derivation of $|-_\sigma$.
+%   \begin{description}
+%   \item {Case $\mathsf{P_{end}}$:} We have that $\chor= \INACT$, then
+%     $\INACT |-_\sigma \endF$ and $\INACT |=_\sigma \endF$ immediately.
+%   \item {Case $\mathsf{P_{init}}$:} We have that $\chor =
+%     \init{A}{B}{a}{k} \pfx \chor'$ and for $\phi = \langle
+%     \initF{A}{B}{a(k)} \rangle \phi'$, then $\chor |-_\sigma \phi$ and
+%     $\chor' |-_\sigma \phi'$.  We know that $\chor
+%     \action{\initF{A}{B}{a(k)}} \chor'$ and also that $\chor'|=_\sigma
+%     \phi'$ by induction hypothesis.  Hence, $\chor|=_\sigma \langle
+%     \initF{A}{B}{a(k)} \rangle \phi'$ follows directly by definition
+%     of $|=$.
+%   \item {Case $\mathsf{P_{com}}$:} Analogous to the $\mathsf{P_{init}}$ case.
+%   \item {Case $\mathsf{P_{sel}}$:} We have that $\chor =
+%     \choice{A}{B}{k}{l}{\chor'} $ and $\chor|-_\sigma \bigwedge_{i \in
+%       I} \langle \branchF{A}{B}{l_i}{k} \rangle \phi $. Because of
+%     $\mathsf{P_{sel}}$ we have that $\forall i \in I.\, \chor_i
+%     |-_\sigma \phi_i$ and by induction hypothesis, $\forall i \in I.\,
+%     \chor_i |=_\sigma \phi_i$.  By definition of the semantics of
+%     $\langle \ell \rangle \phi$ and conjunction, then:
+%     \begin{equation*}
+%       \chor |=_\sigma \bigwedge_{i \in I} \langle \branchF{A}{B}{l_i}{k} \rangle
+%       \phi_i \text{ iff } \bigwedge_{i \in I} (\chor
+%       \action{\branchF{A}{B}{l_i}{k}} \chor' \land \chor' |=_\sigma \phi_i )
+%     \end{equation*}
+
+%     Take $\ell = \branchF{A}{B}{l_i}{k}$ for $i \in I$, then $\chor
+%     |=_\sigma \bigwedge_{i \in I} \langle \ell \rangle \phi_i$ if
+%     $\ell = \branchF{A}{B}{l_i}{k}$ (trivially true) and if
+%     $\chor\equiv (\nu s)(\choice{A}{B}{k}{l}{\chor'} | \chor'')$ which
+%     is equivalent to $\chor$ up-to substitution $[s/k]$. Moreover,
+%     $\exists \chor' \text{ s.t. } \chor --> \chor' \text{ and } \chor'
+%     |=_\sigma \phi_i $ holds by induction hypothesis, so we are done.
+
+
+%   \item {Case $\mathsf{P_{ifT}, P_{ifF}}$:} We take only the proof for
+%     $\mathsf{P_{ifT}}$, the other works similarly. We have that $\chor
+%     = \itn{e}{\chor_1}{\chor_2}$, by induction hypothesis we have that
+%     $\chor_1 |-_\sigma e => \phi$ and $\chor_2 |-_\sigma \lnot e =>
+%     \phi$.  We have to show that $\chor |=_\sigma \nextOp \phi $.
+%     Assume a $\sigma$ s.t. $\sigma |-_\sigma e @ A \Downarrow \true$
+%     (The other case is symmetric), then we get by the use of
+%     \Did{G-IfT} with $\sigma$ and $\chor$ that $( \sigma, \chor) -->
+%     (\sigma, \chor_1)$. Additionally we have that:
+%     \begin{align*}
+%       \chor_1  & |-_\sigma e @ A \Downarrow \true => \phi \\
+%       \chor_1 & |-_\sigma \false \lor \phi \\
+%       \chor_1 & |-_\sigma \phi
+%     \end{align*}
+%     Then, $\chor_1 = \chor' $ in $\exists \chor'\pfx \chor' |=_\sigma
+%     \phi \text{ s.t. } \chor --> \chor' $, so we are done.
+
+
+%   \item {Case $\mathsf{P_{res}}$:} We have that $\chor = \new{x}
+%     \chor' $ and by induction hypothesis we have that $\chor'
+%     |=_\sigma \phi $. We have to show that $\chor |=_\sigma \new{x}
+%     \phi$ from $\chor |-_{\sigma} \new{x} \phi$.  From
+%     $\mathsf{P_{res}}$, we know that $\chor' |-_\sigma \phi$ with $k$
+%     a fresh variable. By definition, $\chor\ |=_\sigma \new{x} \phi $
+%     if $\chor \equiv \new{x} \chor' $ and $\chor' |=_\sigma \phi$, so
+%     we are done.
+
+ 
+%  %%%%%%%%%%%%%HL: Recursion -- Removed for the progress report %%%%%%%%%%%
+% % 
+%  % \item Case $\mathsf{P_{rec}}$. We have that $C = \mu X^A\pfx C' $
+%  %   and assuming the inductive hypothesis we have that $X |-
+%  %   \phi$. We have to show that $\mu X \pfx C |=_\sigma \phi $.
+
+% %Now, consider the following chain of formulae:
+
+% %    \begin{align*}
+% %      \mu^0 X \pfx \phi & =  \true \\
+% %      & \dots \\
+% %      \mu^{n+1} X \pfx \phi & =  \phi[\mu^n X\pfx \phi / X]
+% %      \end{align*}
+
+% %      By induction over ordinal numbers and the induction hypothesis
+% %      we obtain
+% %      \begin{equation}
+% %        \mu X \pfx C |-_\sigma (\mu^n X \pfx \phi)
+% %        \end{equation}
+% %        Which is immediately true for $n= 0 $ and if is true for $n=m$
+% %        then applying the inductive hypothesis and structural
+% %        congruence is also true for $n = m + 1$. We can generalise
+% %        this for all ordinals in $n$, so
+
+% %        \begin{equation}
+% %          \mu X \pfx C |-_\sigma (\mu X. \phi)
+% %          \end{equation}
+
+%   \item {Case $\mathsf{P_{par}}$:} Immediate.
+%     \qed
+%   \end{description}
+
+
+% \end{proof}
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % Completeness 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The following lemmata are used to prove completeness:
+
+% \begin{lemma}[Structural congruence preserves satisfiability]
+%   If $C \equiv C '$ and $C |=_\sigma \phi$, then $C' |=_\sigma \phi$
+% \end{lemma}
+% \begin{proof}
+%   Follows directly from Lemma~\ref{Logic4Struct:lemma:StructuralLogic} and
+%   Theorem~\ref{Logic4Struct:thm:soundness}. \qed
+% \end{proof}
+
+% \begin{lemma}[Operational semantics preserves substitutions]
+% If $C \action{\ell} C'$ then  $C [w/\var] \action{\ell[w/\var]}
+% C'[w/\var]$ for all $\ell$ and appropriate $w$.
+% \begin{proof}
+%   Follows by rule induction over $\action{\ell}$. \qed
+% \end{proof}
+% \end{lemma}
+% \begin{lemma}[Substitution lemma] \label{Logic4Struct:lemma-substitution}
+% For any choreography C; if $C |=_\sigma \phi$ then $C |=_\sigma \phi
+% [w/\var]$ for an appropriate $w$.
+% \end{lemma}
+% \begin{proof}
+% Follows by induction on the satisfaction relation of $C |=_\sigma
+% \phi$. 
+% % (The cases are in my notebook, yet to put them on latex). 
+% \qed
+% \end{proof}
+
+
+% \begin{theorem}[Completeness]
+%   For any choreography $C$, if $C |=_\sigma \phi$ then $C |-_\sigma \phi$.
+% \end{theorem}
+
+% \begin{proof}
+%   By rule induction on the derivation of $|=_\sigma$.
+
+
+%   \begin{itemize}
+%   \item $(C |=_\sigma \true)$. Follows immediately from the application of $ \mathsf{T_{sub}}$.
+
+%   \item $(C |=_\sigma \langle \ell \rangle \phi ')$. Take $C \action{\ell} C'
+%     \land C' |=_\sigma \phi' $, we have to show that $C |-_\sigma \langle \ell
+%     \rangle \phi'$.
+
+%     We proceed by case analysis of $\ell$. 
+
+%     \begin{itemize}
+%       \item Take $\ell = \initF{A}{B}{a}$, then we know that $C |=_\sigma \langle
+%     \ell \rangle \phi$ iff $C \action{\initF{A}{B}{a(k)}} D$ and $D |=_\sigma
+%     \new{k} \phi$. We can also infer that $C = \init{A}{B}{a}{k} \pfx
+%     C'$ and, by the application of $\Did{G-{init}}$ we get that $C
+%     \action{\ell} D$ with $D = \new{k} C'$. From the application of
+%     $\mathsf{P_{res}}$ and the induction hypothesis $\new{k}C' |-_\sigma
+%     \new{k} \phi$ we get that $C' |-_\sigma \phi$, which is the necessary
+%     condition to apply $\mathsf{P_{init}}$ over $C$, so we are done.
+
+%   \item Take $\ell = \comF{A}{B}{k}$.  Then we know that $C =
+%     \interact{A}{B}{k}{e}{x} \pfx C'$ and $C \action{\ell} C'$. 
+%     $C |=_\sigma \langle \ell \rangle \phi ' $ iff $C \action{\ell} C'$ and $C'
+%     |=_\sigma \phi' $. We can apply the induction hypothesis $C' |-_\sigma \phi'$
+%     along $\mathsf{P_{com}}$ to get $C =
+%     \interact{A}{B}{k}{e}{x} \pfx C' |-_\sigma \langle \comF{A}{B}{k} \rangle
+%     \phi'$, so we are done.
+
+%     A similar reasoning also holds for the case where $\ell =
+%     \branchF{A}{B}{l}{k}$.
+% \end{itemize}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % \nextOp \phi is just a generalisation from \langle \ell \rangle \phi
+% % with free \ell, therefore this case is excluded from the proof.
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%   \item $(C |=_\sigma \new{x} \phi')$. Take $C \equiv (\nu v) C'$ and $C' |=_\sigma
+%     \phi' (x \mapsto v)$. By structural congruence we have that
+%     $\new{u} C' \equiv_\alpha \new{x} C'$ with fresh $x$ on $C'$, then
+%     we can apply $\mathsf{P_{res}}$ with the induction hypothesis $C'
+%     |-_\sigma \phi'$ to get $\new{x} C' |-_\sigma \new{x} \phi'$ and we are done.
+
+%   \item $(C |=_\sigma \phi \land \chi)$. Follows immediately from the
+%     application of the induction hypothesis $C |-_\sigma \phi \land C |-_\sigma
+%     \chi$ and $\mathsf{P_{and}}$.
+
+%   \item $(C |=_\sigma \phi \pp \chi)$. Immediate given $C \equiv C_1 \pp C_2$
+%     and the application of the induction hypothesis $C_1 |-_\sigma \phi \land
+%     C_2 |-_\sigma \chi$ with $\mathsf{P_{par}}$.
+
+%   \item $(C |=_\sigma <<>> \phi)$. Take $(\sigma, C) --> ^* (\sigma',
+%     C') $ and $C' |=_{\sigma'} \phi$, we have to show that $C |-_\sigma
+%     <<>> \phi$.  We can express $(\sigma, C) -->^* (\sigma', C')$ as a
+%     finite sequence of transitions $(\sigma, C) -->^n (\sigma',
+%     C')$. We proceed by induction on $n$. 
+
+%     If $n=1$, then $(\sigma, C) -->^1 (\sigma', C')$ and then the same
+%     cases for $(\sigma, C) \action{\ell} (\sigma', C')$ can be
+%     applied, so the proof will consider the same cases as the one in
+%     $(C |=_\sigma \langle \ell \rangle \phi)$. Because we know
+%     $\langle \ell \rangle \phi => \may \phi$, then we know that $C
+%     |=_\sigma \may \phi$ and we are done.
+
+%     If $n > 1$, then we know that $(\sigma, C) -->^{n-1} (\sigma'',
+%     C'') --> (\sigma', C')$. By Induction hypothesis, we know that
+%     $C'' |=_{\sigma''} \may \phi$. We need to show that $C
+%     |=_{\sigma} \may \phi$. From $(\sigma'', C'') --> (\sigma', C')$
+%     with any $\ell$, we know that $C |=_{\sigma} \nextOp \may \phi$,
+%     which is subsumed by $\may \phi$ and we are done.
+
+%   \item $(C |=_\sigma e_1 = e_2)$. Follows immediately by the
+%     application of $\mathsf{P_{exp}}$.
+
+%   \item $(C |=_\sigma \exists \var \pfx \phi)$.
+%     Take $C[w/\var] |=_\sigma \phi$ for some appropriate $w$. We want
+%     to show that $C |-_\sigma \exists \var \pfx \phi$. 
+%     From lemma \ref{Logic4Struct:Logic4Struct:lemma-substitution} we have that $C |=_\sigma \phi
+%    [w/\var]$.
+% %  \item $(C |=_\sigma \phi \wand \chi)$.
+
+%   \item $(C |=_\sigma \lnot \phi)$. TBD.
+
+%   \end{itemize} \qed
+% \end{proof}
+
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "../Thesis"
+%%% End: 

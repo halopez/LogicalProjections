@@ -1,0 +1,146 @@
+\subsection{Session Types for the End-Point Calculus}
+\label{Logic4Struct-EndPointTypes}
+Session types for the EPC use the syntax of session types in
+equation \ref{Logic4Struct:eq:sessiontypes}. Basically, the type
+discipline of the EPC stems from the Global Calculus, but assigns
+session types to every single participant instead of the whole
+choreography. In this way, the session typing in the EPC describes the
+end-point behaviour.
+% \begin{definition}[
+% End-Point Typing Judgements
+  An {\it end-point typing judgment} contains judgements for processes in  the form $\tprovesA{\Gamma}{P}{\Delta}$ (where $P$ is
+    typed as a behaviour for $A$) and judgements for networks
+    $\tproves{\Gamma}{N}{\Delta}$. In both,  mappings $\Gamma$ and $\Delta$ are {\em service} and {\em session typings} respectively.
+%    triple on processes or
+%   networks:\\
+%   \begin{tabular}{ll}
+%     (Processes) & $\tprovesA{\Gamma}{P}{\Delta}$ (where $P$ is
+%     typed as a behaviour for $A$)\\
+%     (Networks) & $\tproves{\Gamma}{N}{\Delta}$.  
+%   \end{tabular}\\
+%   where the mappings $\Gamma$ and $\Delta$ are the {\em service} and the {\em session typing} respectively.
+% \end{definition}
+Here, $\Gamma$ 
+% (service typing)
+ and $\Delta$ 
+% (session typing) 
+are defined
+as:
+\begin{align*}
+&\Gamma  \ \; ::=\;\ \emptyset
+                  \;\ |\;\ \Gamma, a@A\!:\!(\VEC{k})\alpha
+                  \;\ |\;\ \Gamma, \ol{a}@A\!:\!(\VEC{k})\alpha
+                  \;\ |\;\ \Gamma, x@A\!:\!\theta
+                  \;\ |\;\ \Gamma, X\!:\!\Delta
+%\qquad
+\\
+&\Delta  \ \; ::=\;\ \emptyset
+              \;\ |\;\ \Delta, \VEC{k}@A\!:\!\alpha
+              \;\ |\;\ \Delta, \VEC{k}\!:\!\bot
+\end{align*}
+
+Above, $a@A\!:\!(\VEC{k})\alpha$ indicates the service located at $A$
+which is invoked with fresh session channels $\VEC{k}$ and offers
+service of the shape $\alpha$, while $\ol{a}@A\!:\!(\VEC{k})\alpha$
+indicates the type abstraction for the dual invocation, i.e. a client
+of a service offered by $A$ which invokes with fresh channels $\VEC{k}$ and
+engages in interactions abstracted as $\alpha$. Note $@A$ indicates
+the location of a service in both forms. 
+As before, $\VEC{k}$ should be a vector of pairwise distinct session
+channels which should cover all session channels in $\alpha$, and
+$\alpha$ does not contain free type variables. $(\VEC{k})$ binds
+occurrences of session channels in $(\VEC{k})$ in $\alpha$, which
+induces the standard alpha-equality. A central concept in this type
+discipline is the notion of duality for session types, which is defined as:
+\[
+\ol{\!(\VEC{k})\alpha}@A = ? (\VEC{k}) \ol{\alpha}@A ~~~~~~
+\ol{? (\VEC{k}) \alpha@A} = \! (\VEC{k}) \ol{\alpha}@A 
+\]
+where the notion of duality $\alpha$ of $\alpha$ remains the same.
+
+
+
+
+The typing rules are almost identical as the ones from the original
+presentation of the EPC \cite{carbone7scc}, where the only difference
+lies on the separation between input-output types and
+selection-branching types as originally presented in
+\cite{honda1998lpa}. Here we only comment some examples on the typing
+rules, and the full type system can be found in Appendix
+\ref{Logic4Struct:appendix:EPC-Types}. As in our account of the type
+system for the Global Calculus, we here devote our attention to the
+rules for session initiation and communication.  The two rules
+\Did{E-TInit.In},\Did{E-TInit.Out} describe session initiation
+primitives:
+
+
+\begin{align*}
+  \myrule{ E-TInit.In} 
+  { \typeruleE{\typeEnv }{A}{ P \ccc
+      \VEC{k}@A:\alpha} 
+    \quad a \not\in dom(\typeEnv) 
+    \quad    client(\typeEnv) 
+  } { 
+    \typeruleE{\typeEnv, a @ A: (\VEC{k}) \alpha }{A}{
+      !a(\VEC{k}) \pfx P \ccc \emptyset}
+  }
+  \quad 
+  \myrule{ E-TInit.Out} 
+  { \typeruleE{\typeEnv, a@B:(\VEC{k})\alpha}{A}{ P \ccc \Delta \cdot
+      \VEC{k}@A:\alpha}  } 
+  { \typeruleE{\typeEnv, a @B: (\VEC{k})\alpha }{A}{ \overline{a}
+      <. \VEC{k} .> P \ccc \Delta}}
+\end{align*}
+
+In \Did{E-TInit.In}, the premise only allows for typings of session
+channels involved in the session initialisation of service $a$, that
+is,  only the channels in $\VEC{k}$. This linearity condition blocks
+free session channels from occurring during a replicated input. The
+condition $a \not\in dom(\typeEnv)$ prevents from self-calls and
+ensures that the type assignment occurs at the side of the client.
+Requirements for the complementary typing rule \Did{E-TInit.In} are
+analogous, although the linearity condition is removed. Communication
+rules are standard for session types, for instance, the rule
+\Did{E.TOut} is used to type message outputs:
+
+\begin{align*}
+  \myrule{    E.TOut}
+    { 
+      k \in \VEC{k} \quad
+      \typeruleE{\typeEnv  }{A}{ 
+        P  \ccc \Delta \cdot \VEC{k}@A:\alpha} \quad 
+      \typeruleE{\typeEnv  }{}{ e : \theta} 
+    } 
+    { \typeruleE{\typeEnv  }{A}{
+        \send{k}{e}  P  \ccc \Delta
+      \cdot \VEC{k}@A: k \uparrow \theta
+    \pfx \alpha}}
+\end{align*}
+
+Here, process $\send{k} {e}  P$ types after evaluation that the typing
+of $e$ corresponds to a correct value type and that the continuation
+$P$ behaves as established by the session type  in $\Delta \cdot
+\VEC{k}@A:\alpha$. Analogous requirements hold for typing the input
+process $ \receive{k}{x}  P$.
+
+% \begin{theorem}\label{theorem:epc:sr}\
+
+%   \begin{enumerate}
+    
+%   \item (Subject Congruence) If $\tproves{\Gamma}{M}{\Delta}$ and
+%     $M\LITEQ N$ then $\tproves{\Gamma}{N}{\Delta}$;
+
+%   \item (Subject Reduction) If $\Gamma\vdash N\rhd\Delta$ and
+%     $N\rightarrow N'$ then $\Gamma\vdash N'\rhd\Delta$.
+
+%   \end{enumerate}
+
+% \end{theorem}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "../Thesis"
+%%% End: 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

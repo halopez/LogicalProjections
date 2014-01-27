@@ -1,0 +1,797 @@
+% \section{Global Calculus: Reduction Semantics}
+% \label{Logic4Struct:appendix:GlobalC-Rsemantics}
+
+% The reduction semantics of the Global Calculus is defined by the rules
+% in Figure \ref{Logic4Struct:table:global:reduction-semantics} 
+
+% \begin{myfigure}{ht!}
+% {\small
+%   \begin{align*}
+% &\myruleg{G-RInit}
+% { h \text{ is fresh }  } { ({\sigma,\init {A}{B}{a}{k}\pfx \chor})  
+%           -->
+%       ({\sigma, \chor[h/k]}) }
+% \quad \myruleg{G-RStruct}
+% {\chor\equiv \chor'' \quad
+%       ({\sigma,\chor})  -->  ({\sigma', \chor'}) \quad
+%       \chor'\equiv \chor'''} {({\sigma,\chor''})  --> 
+%       ({\sigma',\chor'''})}
+%    \\[0.3cm]&
+% % \myruleg{G-RSum}
+% % { (\sigma, \chor_i) --> (\sigma', \chor' ) \quad i \in I}
+% %     {(\sigma, \sum_{i \in I} \chor_i)
+% %       --> ({\sigma',\chor'})}
+% % ~ 
+% \qquad \qquad \myruleg{G-RRec}
+% { (\sigma, \chor [\rec X. \chor/\chor]) --> (\sigma', \chor' ) }
+%     {(\sigma, \rec X. \chor)
+%       --> ({\sigma',\chor'})}
+% \qquad 
+% \myruleg{G-RPar}
+% {({\sigma,\chor_1}) --> 
+%       ({\sigma',\chor_1'})} {({\sigma,\chor_1\pp \chor_2})
+%        -->  ({\sigma',\chor_1'\pp \chor_2})}
+% % ~
+% % \myruleg{G-RRes}
+% % {({\sigma,\chor}) --> ({\sigma',\chor'})}
+% %       {({\sigma, \new{k}\chor})
+% %        -->  ({\sigma', \new{k}\chor'})}
+%    \\[0.3cm]&
+% \myruleg{G-RIfT}
+% {\sigma(e@A)\Downarrow \true} { (\sigma,
+%       \itn{e@A}{\chor_1}{\chor_2})  --> (\sigma, \chor_1) }
+% \quad
+% \myruleg{G-RIfF}
+% {\sigma(e@A)\Downarrow \false } { (\sigma,
+%       \itn{e@A}{\chor_1}{\chor_2})  --> (\sigma,\chor_2)}
+% \end{align*} \vspace{-0.5cm}\begin{align*}
+% \myruleg{G-RCom}
+% {\sigma(e@A)\Downarrow v} {
+%       ({\sigma,\interact{A}{B}{k}{\mathsf{op},e}{x}\pfx \chor})
+%        -->  ({\sigma[x@B \mapsto v],\chor}) }
+%  \end{align*}}
+%   \caption{Reduction Semantics for the Global Calculus}
+%   \label{Logic4Struct:table:global:reduction-semantics}
+% \end{myfigure}
+
+
+\section{Global Calculus: Typing Rules}
+\label{Logic4Struct:appendix:global:typing}
+
+The global typing judgments are triples $\typeEnv |- \chor  : \Delta$
+inductively defined by the typing rules in Figure \ref{Logic4Struct:fig:global-types}.
+
+
+\begin{myfigure}{ht!}
+{\small
+  \begin{align*}
+    &\qquad \qquad \qquad \myrule{    G-TInit}
+    { \typerule{\typeEnv, a@B : (\vec{k})\alpha  }{}{
+        \chor  \ccc \Delta \cdot \vec{k}[B,A]: \alpha \quad A \neq B} } { \typerule{\typeEnv, a@B : (\vec{k})\alpha  }{}{
+        \init{A}{B}{a}{\vec{k}}\pfx \chor  \ccc \Delta}}
+%     \quad
+%     \myrule{    G-TSum}
+%     { \typerule{\typeEnv  }{}{
+%         \chor_1   \ccc \Delta}
+%       \quad
+%        \typerule{\typeEnv  }{}{
+%         \chor_2   \ccc \Delta}
+%     } { \typerule{\typeEnv  }{}{
+%         \chor_1 + \chor_2 \ccc \Delta}}
+\\ &
+    \myrule{    G-TCom}
+    { \typerule{\typeEnv  }{}{
+        \chor   \ccc \Delta \cdot \vec{k} [A,B] :\alpha}
+      \quad \typerule{\typeEnv}{}{e@A:\theta}
+      \quad \typerule{\typeEnv}{}{x@B:\theta}
+      \quad k \in \vec{k}
+      \quad A \neq B 
+    } { \typerule{\typeEnv  }{}{
+        \interact{A}{B}{k}{e}{x} \pfx \chor \ccc \Delta \cdot
+        \vec{k}[A,B]: k \uparrow \theta \pfx \alpha}}
+\\ &
+    \myrule{    G-TComInv}
+    { \typerule{\typeEnv  }{}{
+        \chor   \ccc \Delta \cdot \vec{k} [B,A] :\alpha}
+      \quad \typerule{\typeEnv}{}{e@A:\theta}
+      \quad \typerule{\typeEnv}{}{x@B:\theta}
+      \quad k \in \vec{k}
+      \quad A \neq B
+%       \quad j \in J
+    } { \typerule{\typeEnv  }{}{
+        \interact{A}{B}{k}{e}{x} \pfx \chor \ccc \Delta \cdot
+        \vec{k}[B,A]: k \downarrow \theta \pfx
+        \alpha}}
+\\ & \qquad \qquad \qquad 
+    \myrule{    G-TChoice}
+    { \typerule{\typeEnv  }{}{
+        \chor_j   \ccc \Delta \cdot \vec{k} [A,B] :\alpha_j}
+     \quad k \in \vec{k}
+      \quad A \neq B 
+      \quad j \in I
+    } { \typerule{\typeEnv  }{}{
+        \choice{A}{B}{k}{l}{\chor} \ccc \Delta \cdot
+        \vec{k}[A,B]: \&\{l_i: \alpha_i \}_{i \in I}}}
+\\ &\qquad \qquad \qquad 
+    \myrule{    G-TChoiceInv}
+    { \typerule{\typeEnv  }{}{
+        \chor_j   \ccc \Delta \cdot \vec{k} [B,A] :\alpha_j}
+     \quad k \in \vec{k}
+      \quad A \neq B 
+      \quad j \in I
+    } { \typerule{\typeEnv  }{}{
+        \choice{A}{B}{k}{l}{\chor} \ccc \Delta \cdot
+        \vec{k}[B,A]: \oplus \{ l_i : \alpha_i \}_{i \in I} }}
+\\ &
+    \myrule{    G-Tpar}
+    { \typerule{\typeEnv  }{}{
+        \chor_1   \ccc \Delta_1}
+      \quad
+       \typerule{\typeEnv  }{}{
+        \chor_2   \ccc \Delta_2}
+    } { \typerule{\typeEnv  }{}{
+        \chor_1 \pp \chor_2 \ccc \Delta_1 \bullet \Delta_2}}
+    \quad 
+    \myrule{    G-TIf}
+    { \typerule{\typeEnv  }{}{
+        e@A: \mathtt{bool}}
+      \quad
+       \typerule{\typeEnv  }{}{
+        \chor_1   \ccc \Delta}
+      \quad
+       \typerule{\typeEnv  }{}{
+        \chor_2   \ccc \Delta}
+    } { \typerule{\typeEnv  }{}{
+        \itn{e@A}{\chor_1}{\chor_2} \ccc \Delta}}
+% \\ &
+%     \myrule{    G-TRes1}
+%     { \typerule{\typeEnv  }{}{
+%         \chor   \ccc \Delta, \vec{k_1} k \vec{k_2}[A,B]:\alpha}
+%     } { \typerule{\typeEnv  }{}{
+%         \new{k} \chor \ccc \Delta, \vec{k_1}\vec{k_2} : \bot}}
+%     \quad
+%     \myrule{    G-TRes2}
+%     { \typerule{\typeEnv  }{}{
+%         \chor   \ccc \Delta, \vec{k_1} k \vec{k_2}:\bot}
+%     } { \typerule{\typeEnv  }{}{
+%         \new{k} \chor \ccc \Delta, \vec{k_1}\vec{k_2} : \bot}}
+%     \quad
+%     \myrule{    G-TRes3}
+%     { \typerule{\typeEnv  }{}{
+%         \chor   \ccc \Delta, \epsilon:\bot}
+%     } { \typerule{\typeEnv  }{}{
+%         \new{k} \chor \ccc \Delta, \vec{k_1}\vec{k_2} : \bot}}
+\\ &
+    \myrule{    G-TRec}
+    { \typerule{\typeEnv \cdot X : \Delta  }{}{
+        \chor   \ccc \Delta}
+    } { \typerule{\typeEnv  }{}{
+        \mu X \pfx \chor \ccc \Delta}}
+    \quad
+    \myrule{    G-TVar}
+    { \typeEnv, X : \Delta \text{ well formed}  
+    } { \typerule{\typeEnv, X:\Delta  }{}{
+        X \ccc \Delta}}
+    \quad
+    \myrule{    G-TZero}
+    { \typeEnv \text{ well formed}  \quad \forall i \neq j, \{k_i\}
+      \cap \{k_j\} = \emptyset
+    } { \typerule{\typeEnv  }{}{
+        \INACT \ccc \bigcup_i \vec{k_i} [A_i, B_i]\endT}}
+  \end{align*}
+}
+\caption{Global Calculus: Typing Rules}
+\label{Logic4Struct:fig:global-types}
+\end{myfigure}
+
+
+
+% \section{End-Point Calculus: Reduction Semantics}
+% \label{Logic4Struct:appendix-semanticsEPC}
+
+% The reduction semantics for the end-point calculus follows the
+% $\pi$-calculus and is defined by the rules in
+% Figure~\ref{Logic4Struct:table:endpoint:reduction-semantics}. 
+% \begin{myfigure}{ht!}
+% \begin{align*}
+% &\myruleg{E-RInit}
+%   {     k_i\not\in\fsc{P'}\cup\fsc{Q'}   \quad \tilde{h} \text{ is
+%       fresh}}
+%   {   \pr {A}{\repInitIn{a}{\tilde k}\pfx P\pp P'}\sigma\pp
+%    \pr {B}{\initOut{a}{\tilde k}\pfx Q\pp Q'}{\sigma'}    \to \ 
+%    % \new  {\tilde k}
+%    (
+%    \pr {A} {\repInitIn{a}{\tilde k}\pfx P\pp P\pp P'} {\sigma}\pp \pr
+%    {B}{Q\pp Q'} {\sigma'}
+%    )[\tilde{h}/\tilde{k}]
+%   }   
+% \\[0.5cm]
+% & \qquad \myruleg{ E-RCom}
+%   {   \sigma\proves e\converges v   } 
+%   {  \pr{A}{\receive{k}{x} P \,|\, P'}{\sigma}
+%   \,|\, 
+%   \pr{B}{\send{k}{x} Q \,|\, Q'}{\sigma'}
+%   \to \ 
+%   \pr{A}{P\pp P'}{\sigma[x\mapsto v]}
+%   \pp 
+%   \pr{B}{Q\pp Q'} {\sigma'}  }
+% \\[0.5cm]
+% &\myruleg{ E-RSel}
+%   {   j \in I   } 
+%   {  \pr{A}{ \branching{k}{\sum_i \mathsf{l_i} \pfx P_i} \,|\, P'}{\sigma}
+%   \,|\, 
+%   \pr{B}{\selection{k}{l_j} Q \,|\, Q'}{\sigma'}
+%   \to \ 
+%   \pr{A}{P_j\pp P'}{\sigma}
+%   \pp 
+%   \pr{B}{Q\pp Q'} {\sigma'}  }
+% \\[0.5cm]
+% &\myruleg{ E-RIfT}
+% {  \sigma\vdash e \converges \true } 
+% {  \pr{A}{\itn{e}{P_1}{P_2}\,|\, P'}{\sigma}
+%   \;\to\; 
+%   \pr{A}{P_1\pp P'}{\sigma}}
+% \qquad \qquad 
+% \myruleg{ E-RPar}
+% {  M   \;\to\;    M' } 
+% {   M|N   \;\to\;    M'|N} 
+% % \quad 
+% % \myruleg{ E-RRes}
+% % {   M   \;\to\;    M' } 
+% % {  \new{k}M   \;\to\;    \new{k}M' } 
+% \\[0.5cm]
+% &\myruleg{ E-RIfF}
+% {  \sigma\vdash e \converges \false } 
+% {   \pr{A}{\itn{e}{P_1}{P_2}\,|\, P'}{\sigma}   \;\to\;    \pr{A}{P_2\pp P'}{\sigma}}
+% \quad
+% \myruleg{ E-RSum}
+% { i\in\{1,2\} }  {   A[P_1\oplus P_2|R]_\sigma   \;\to\;
+%   A[P_i|R]_\sigma }   
+% \end{align*} 
+% \begin{align*}
+% % \Did{E-Res1} \ &
+% % \Rule
+% % {
+% %   \pr{A}{P}{\sigma}  
+% %   \;\to\; 
+% %   \pr{A}{P'}{\sigma'}  
+% % } 
+% % {
+% %   \pr{A}{\new{s}P}{\sigma}
+% %   \;\to\; 
+% %   \pr{A}{\new{s}P'}{\sigma}
+% % } 
+% % &
+% \myruleg{ E-RRec}
+% {
+%   \pr A {P\MSUBS{\mu X.P}{X}\pp Q}{\sigma}\pp N
+%   \;\to\; 
+%   N'
+% } 
+% {
+%   \pr A {\mu X.P\pp Q}{\sigma}\pp N
+%   \;\to\; 
+%   N'
+% }
+% &
+% % \myruleg{ E-RAssign} 
+% % {
+% %   \sigma\proves e\converges v
+% % } 
+% % {
+% %   \pr{A}{x:=e\pfx P\,|\, P'}{\sigma}
+% %   \;\to\; 
+% %   \pr{A}{P\pp P'}{\sigma[x\mapsto v]}
+% % }
+% % \\\\
+% % &
+% \qquad \myruleg{ E-RStruct}{M\equiv M'\quad M'\to N'\quad N'\equiv N} { M\to N}
+% \end{align*}
+% % \begin{align*}
+% % &
+% % % \Did{E-Par2} \ &
+% % % \Rule
+% % % {
+% % %   \pr{A}{P_1\,|\, R}{\sigma}  
+% % %   \;\to\; 
+% % %   \pr{A}{P'_1\,|\, R}{\sigma'}  
+% % % } 
+% % % {
+% % %   \pr{A}{P_1\,|\,  P_2\,|\, R}{\sigma}  
+% % %   \;\to\; 
+% % %   \pr{A}{P'_1\,|\,  P_2\,|\, R}{\sigma'}  
+% % % } 
+% % \end{align*}
+% \caption{Reduction Relation for the End-Point Calculus}
+% \label{Logic4Struct:table:endpoint:reduction-semantics}
+% % \end{align*}
+
+% \end{myfigure}
+
+
+\section{End-Point Calculus: Typing rules}
+\label{Logic4Struct:appendix:EPC-Types}
+
+The typing rules for the End Point Calculus are given in Figure \ref{Logic4Struct:figure:EPC-Types}, where
+the compatibility operators $\COH$ and $\odot$
+are defined accordingly as:
+
+\begin{myfigure}{t!}
+{\small
+  \begin{align*}
+    &  \myrule{ E-TInit.In} 
+  { \typeruleE{\typeEnv }{A}{ P \ccc
+      \VEC{k}@A:\alpha} 
+    \quad a \not\in dom(\typeEnv) 
+    \quad    client(\typeEnv) 
+  } { 
+    \typeruleE{\typeEnv, a @ A: (\VEC{k}) \alpha }{A}{
+      !a(\VEC{k}) \pfx P \ccc \emptyset}
+  }
+    \quad
+    \myrule{ E-TInit.Out} 
+  { \typeruleE{\typeEnv, a@B:(\VEC{k})\alpha}{A}{ P \ccc \Delta \cdot
+      \VEC{k}@A:\alpha}  } 
+  { \typeruleE{\typeEnv, a @B: (\VEC{k})\alpha }{A}{ \overline{a}
+      <. \VEC{k} .> P \ccc \Delta}}\\
+    &\myrule{    E.TBranch}
+    { 
+      j  \in J \quad
+      J \subseteq I \quad
+      k \in \VEC{k} \quad
+      \typeruleE{\typeEnv  }{A}{P_j  \ccc \Delta \cdot \VEC{k}@A:\alpha_j}
+    } 
+    { 
+      \typeruleE{\typeEnv  }{A}{\branching{k}{\sum_{i \in I}
+          \mathsf{l_i} \pfx P_i}  \ccc \Delta \cdot \VEC{k}@A:k} \rhd
+      \& \{ l_i : \alpha_i \}}
+    \quad
+    \myrule{    E.TVar}
+    { 
+    } { \typeruleE{\typeEnv, X:\Delta  }{A}{
+        X \ccc \Delta}}
+\\
+    &\myrule{    E.TSel}
+    { 
+      i,j  \in I \quad
+      k \in \VEC{k} \quad
+      \typeruleE{\typeEnv  }{A}{P_j  \ccc \Delta \cdot \VEC{k}@A:\alpha_j}
+    } 
+    { 
+      \typeruleE{\typeEnv  }{A}{  \selection{\vec{k}}{ \mathsf{l_i}}
+        P   \ccc \Delta \cdot \VEC{k}@A:k} \rhd
+      \oplus \{ l_i : \alpha_i \}}
+%     ~
+% \myrule{    E.TSel}
+%     { i  \in I \subseteq J \quad \typeruleE{\typeEnv  }{A}{ 
+%         P  \ccc \Delta , \vec{k}@A:\alpha_i}} 
+%     { \typeruleE{\typeEnv  }{A}{
+%         \selection{\vec{k}}{ \mathsf{l_i}} P  \ccc \Delta
+%       , \vec{k}@A: \sum_{j \in J} k \uparrow \mathsf{l}_j (\theta_i)
+%     \pfx \alpha_i}}
+~
+    \myrule{    E.TRec}
+    { \typeruleE{\typeEnv , X : \Delta  }{A}{
+        P   \ccc \Delta}
+    } { \typeruleE{\typeEnv  }{A}{
+        \mu X \pfx P \ccc \Delta}}
+    ~
+        \myrule{    E.TInact}
+    { 
+    } { \typeruleE{\typeEnv  }{A}{
+        \INACT \ccc \emptyset}}
+\\
+& 
+\myrule{    E.TIn}
+    { 
+      k \in \VEC{k} \quad
+      \typeruleE{\typeEnv  }{A}{ 
+        P  \ccc \Delta \cdot \VEC{k}@A:\alpha} \quad 
+      \typeruleE{\typeEnv  }{}{ x : \theta} 
+    } 
+    { \typeruleE{\typeEnv  }{A}{
+        \receive{k}{x}  P  \ccc \Delta
+      \cdot \VEC{k}@A: k \downarrow \theta
+    \pfx \alpha}}
+~
+\myrule{    E.TOut}
+    { 
+      k \in \VEC{k} \quad
+      \typeruleE{\typeEnv  }{A}{ 
+        P  \ccc \Delta \cdot \VEC{k}@A:\alpha} \quad 
+      \typeruleE{\typeEnv  }{}{ e : \theta} 
+    } 
+    { \typeruleE{\typeEnv  }{A}{
+        \send{k}{e}  P  \ccc \Delta
+      \cdot \VEC{k}@A: k \uparrow \theta
+    \pfx \alpha}}
+\\
+    &\myrule{    E.TIf}
+    { \typeruleE{\typeEnv  }{}{
+        e@A: \mathtt{bool}}
+      \quad
+       \typeruleE{\typeEnv  }{A}{
+        P   \ccc \Delta }
+      \quad
+       \typeruleE{\typeEnv  }{A}{
+        Q   \ccc \Delta}
+    } { \typeruleE{\typeEnv  }{}{
+        \itn{e@A}{P}{Q} \ccc \Delta}}
+    \quad
+    \myrule{    E.TSum}
+    { \typeruleE{\typeEnv  }{A}{
+        P   \ccc \Delta}
+      \quad
+       \typeruleE{\typeEnv  }{A}{
+        Q   \ccc \Delta}
+    } { \typeruleE{\typeEnv  }{A}{
+        P \oplus Q \ccc \Delta}}
+\\
+      &
+%     \myrule{    E.TRes1}
+%     { \typeruleE{\typeEnv  }{A}{
+%         P   \ccc \Delta, \VEC{k_1} k \VEC{k_2}: \bot}
+%     } { \typeruleE{\typeEnv  }{A}{
+%         \new{k} P \ccc \Delta, \VEC{k_1} \VEC{k_2} : \bot}}
+%     \,
+%     \myrule{    E.TRes2}
+%     { \typeruleE{\typeEnv  }{A}{
+%         P   \ccc \Delta,\varepsilon: \bot}
+%     } { \typeruleE{\typeEnv  }{A}{
+%         \new{k} P \ccc \Delta, \VEC{k_1} \VEC{k_2} : \bot}}
+%     \,
+    \myrule{    E.TEnd}
+    { \typeruleE{\typeEnv  }{A}{
+        P   \ccc \Delta}
+     \quad \{\VEC{k} \} \cap \fsc{\Delta} = \emptyset
+    } { \typeruleE{\typeEnv  }{A}{
+        P \ccc \Delta,  \VEC{k}@A : \endT}}
+%    \\&
+    \,
+    \myrule{    E.TPar}
+    { \typeruleE{\typeEnv_1  }{A}{
+        P   \ccc \Delta_1}
+      \quad
+      \typeruleE{\typeEnv_2  }{A}{
+        Q   \ccc \Delta_2} 
+      \quad \typeEnv_1 \COH \typeEnv_2
+      \quad \Delta_1 \COH \Delta_2
+    } { \typeruleE{\typeEnv_1 \odot \typeEnv_2 }{A}{
+        P \pp Q \ccc \Delta_1 \odot \Delta_2}}
+    \\&
+    \myrule{    E.TBot}
+    { \typeruleE{\typeEnv  }{A}{
+        P   \ccc \Delta}
+     \quad \{ \VEC{k} \} \cap \fsc{\Delta} = \emptyset
+    } { \typeruleE{\typeEnv  }{A}{
+        P \ccc \Delta,  \VEC{k} : \bot}}
+    ~
+        \myrule{    E.TPart}
+    { \typeruleE{\typeEnv  }{A}{
+        P   \ccc \Delta}
+     ~
+     \typeruleE{\typeEnv  }{}{
+        \sigma@A}
+    } { \typeruleE{\typeEnv  }{A}{
+        \pr{A}{P}{\sigma} \ccc \Delta}}
+    ~
+            \myrule{    E.TInactNW}
+    { 
+    } { \typeruleE{\typeEnv  }{A}{
+        \INACTNW \ccc \emptyset}}
+    \\ &
+        \myrule{    E.TBotN}
+    { \typeruleE{\typeEnv  }{}{
+        \network   \ccc \Delta} \quad \VEC{k} \cap fsc(\Delta) = \emptyset
+    } { \typeruleE{\typeEnv }{}{
+        \network \ccc \Delta \cdot \VEC{k} : \bot}}
+    \qquad \qquad 
+    \myrule{    E.TEndN}
+    { \typeruleE{\typeEnv  }{}{
+        \network   \ccc \Delta}
+     \, \{\VEC{k} \} \cap \fsc{\Delta} = \emptyset
+    } { \typeruleE{\typeEnv  }{A}{
+        \network \ccc \Delta,  \VEC{k}@A : \endT}}
+    ~
+%     \myrule{    E.TResN1}
+%     { \typeruleE{\typeEnv  }{}{
+%         \network   \ccc \Delta, \VEC{k_1} k \VEC{k_2}: \bot}
+%     } { \typeruleE{\typeEnv  }{}{
+%         \new{k} \network \ccc \Delta, \VEC{k_1} \VEC{k_2} : \bot}}
+%     \quad
+%     \myrule{    E.TResN2}
+%     { \typeruleE{\typeEnv  }{}{
+%         \network   \ccc \Delta,\varepsilon: \bot}
+%     } { \typeruleE{\typeEnv  }{}{
+%         \new{k} \network \ccc \Delta, \VEC{k_1} \VEC{k_2} : \bot}}
+\\ & \qquad \qquad \qquad 
+    \myrule{    E.TParN}
+    { \typeruleE{\typeEnv_2  }{}{
+        \network_1   \ccc \Delta_1}
+      \quad
+      \typeruleE{\typeEnv_1  }{}{
+        \network_2   \ccc \Delta_2}
+      \quad \typeEnv_1 \COH \typeEnv_2\quad \Delta_1 \COH \Delta_2
+    } { \typeruleE{\typeEnv_1 \odot \typeEnv_2  }{}{
+        \network_1 \pp \network_2 \ccc \Delta_1 \odot \Delta_2}}
+\end{align*}
+\caption{End Point Calculus: Typing rules}
+\label{Logic4Struct:figure:EPC-Types}}
+
+\end{myfigure}
+
+
+  \begin{enumerate}
+  \item Two service typings $\Gamma_1$ and $\Gamma_2$ are compatible
+    (written $\Gamma_1\COH\Gamma_2$) if they satisfy the following
+    conditions:
+      \begin{enumerate}
+
+      \item if $a@A\in\textsf{dom}(\Gamma_i)$ then
+        $a@B\not\in\textsf{dom}(\Gamma_{j})$ for
+        every $B$ and for $i \neq j$;
+
+      \item if $\ol{a}@A\in\textsf{dom}(\Gamma_{i})$ and
+        $\ol{a}@B\in\textsf{dom}(\Gamma_{j})$ then $A=B$ and
+        $\Gamma_i(\ol{a}@A)=\Gamma_{j}(\ol{a}@B)$ for $i \neq j$ (up
+        to $\alpha$-renaming of bound names);
+
+      \item if $a@A\in\textsf{dom}(\Gamma_i)$ and
+        $\ol{a}@B\in\textsf{dom}(\Gamma_{j})$ then
+        $A=B$ and $\Gamma_i({a}@A)= \ol{ \Gamma_{j}( \ol{a}@B) }$ for $i \neq j$  (up to $\alpha$-renaming of bound
+        names);
+      \item $\Gamma_1(x)=\Gamma_2(x)$ for each $x$ in $\Gamma_{1,2}$;
+      \item $\Gamma_1(X)=\Gamma_2(X)$ for each $X$ in $\Gamma_{1,2}$.
+      \end{enumerate}
+
+    \item Two session typings $\Delta_1$ and $\Delta_2$ are compatible
+      (written $\Delta_1\COH\Delta_2$) if they satisfy the following
+      conditions:
+      \begin{enumerate}
+      \item if $\VEC{k}\in\mathsf{dom}(\Delta_1)$,
+        $\VEC{t}\in\mathsf{dom}(\Delta_2)$ and
+        $\VEC{k}\cap\VEC{t}\not=\emptyset$ then $\VEC{k}=\VEC{t}$;
+      \item if $\VEC{k}\!:\!\bot\in\Delta_i$ then
+        $\VEC{k}\not\in\mathsf{dom}({\Delta_{j}})$ for $i \neq j$;
+      \item if $\VEC{k}@A\!:\!\alpha_1$ in $\Delta_1$ and
+        $\VEC{k}@A\!:\!\alpha_2$ in $\Delta_2$ then
+        $\fsc{\alpha_1}\cap\fsc{\alpha_2}=\emptyset$;
+      \item if $\VEC{k}@A\!:\!\alpha_1$ in $\Delta_1$ and
+        $\VEC{k}@B\!:\!\alpha_2$ in $\Delta_2$ then
+        $\alpha_1 = \ol{ \alpha_2 }$ (for $A\not=B$).
+      \end{enumerate}
+
+
+  \item $\Gamma_1\odot\Gamma_2$, defined whenever
+    $\Gamma_1\COH\Gamma_2$, is the minimum service typing such that:
+    \begin{enumerate}
+    \item if ${a}@A:\alpha\in\Gamma_{i}$ % and
+      % $\ol{a}@A\in\mathsf{dom}(\Gamma_{j})$
+      then ${a}@A:\alpha\in \Gamma_1\odot\Gamma_2$;
+    \item if $\ol{a}@A:\alpha\in\Gamma_{i}$ and
+      ${a}@A:\alpha\not\in\Gamma_{j}$ then for $i \neq j$,
+      $\ol{a}@A:\alpha\in \Gamma_1\odot\Gamma_2$;
+    \item if $x@A:\theta\in\Gamma_i$ ($X:\Delta\in\Gamma_i$) then
+      $x@A:\theta\in\Gamma_1\odot\Gamma_2$
+      ($X:\Delta\in\Gamma_1\odot\Gamma_2$).
+    \end{enumerate}
+
+
+  \item $\Delta_1\odot\Delta_2$, defined whenever
+    $\Delta_1\COH\Delta_2$, is the minimum session typing such that:
+    \begin{enumerate}
+    \item if $\tilde
+      k@A\in\mathsf{dom}(\Delta_i)\backslash\mathsf{dom}(\Delta_{j})$
+      for $i \neq j$, then $\tilde k@A:\Delta(\tilde
+      k@A)\in\Delta_1\odot\Delta_2$;
+    \item if $\tilde
+      k\in\mathsf{dom}(\Delta_i)\backslash\mathsf{dom}(\Delta_{j})$ for $i \neq j$,
+      then $\tilde k:\perp\in\Delta_1\odot\Delta_2$;
+    \item if $\tilde k@A:\alpha\in\Delta_i$ and $\tilde
+      k@A:\beta\in\Delta_{j}$ for $i \neq j$, then $\tilde
+      k@A:\alpha\pp\beta\in\Delta_1\odot\Delta_2$;
+      % for
+      % ($\alpha\not=\ol\beta$).
+
+    \item if $\tilde k@A\in\mathsf{dom}(\Delta_i)$ and $\tilde
+      k@B\in\mathsf{dom}(\Delta_{j})$ for $i \neq j$, then $\tilde
+      k:\perp\in\Delta_1\odot \Delta_2$.
+    \end{enumerate}
+  \end{enumerate}
+
+
+
+
+\section{End Point Projection: Merging}
+\label{Logic4Struct:appendix:EPP-merging}
+
+
+\begin{definition}[Merge Operator]
+
+  $P \merge Q$ is a partial commutative binary operator on typed
+  processes which is well-defined iff $P \mergeable Q$ and satisfies
+  the rules in Figure \ref{Logic4Struct:figure:EPP-merging}, where,
+  in the right-hand side of each rule, we assume that each application
+  of the operator to, say, $P$ and $Q$, is such that $P \mergeable Q$.
+
+
+\begin{myfigure}{t!}
+\begin{align*}
+	\repInitIn{a}{k} \pfx P \merge \repInitIn{a}{k} \pfx Q & \DEFEQ  \repInitIn{a}{k} \pfx (P \merge Q)\\
+	\initOut{a}{k} \pfx P \merge \initOut{a}{k} \pfx Q & \DEFEQ  \initOut{a}{k} \pfx (P \merge Q)\\
+	\send{k}{x} P \merge \send{k}{x} Q & \DEFEQ \send{k}{x}  (P \merge Q) \\
+	\receive{k}{y}P \merge \receive{k}{y} Q & \DEFEQ \receive{k}{y}  (P \merge Q)	\\
+	\branching{k}{\Sigma_{i \in I} \mathsf{l_i} \pfx P_i}\merge \branching{k}{\Sigma_{i \in J} \mathsf{l_i} \pfx Q_i} & \DEFEQ \branching{k}{ \begin{array}{l} \Sigma_{i \in I\cap J} \mathsf{l_i} \pfx P_i \merge Q_i \\ +\Sigma_{i \in I \backslash J} \mathsf{l_i} \pfx P_i  \\ +\Sigma_{i \in  J \backslash I} \mathsf{l_i} \pfx Q_i \end{array}  }\\
+	\selection{k}{l} P \merge \selection{k}{l} Q & \DEFEQ \selection{k}{l}(P \merge Q)\\
+	\itn{e}{P_1}{P_2} \merge \itn{e}{Q_1}{Q_2} & \DEFEQ \itn{e}{(P_1 \merge Q_1)}{(P_2 \merge Q_2)}\\
+	(P_1 \pp P_2) \merge (P_3 \pp P_4)  & \DEFEQ (P_1 \merge P_3) \pp (P_2 \merge P_4)\\
+	(P_1 \oplus P_2) \merge (Q_1 \oplus Q_2)  & \DEFEQ (P_1 \merge Q_1) \oplus (P_2 \merge Q_2)\\
+	\rec X \pfx P \merge \rec X \pfx Q  & \DEFEQ \rec X \pfx (P \merge  Q )\\
+	X \merge X  & \DEFEQ X\\
+	P \merge \INACT  & \DEFEQ P\\
+	P \merge Q  & \DEFEQ  P' \merge Q' \qquad (P \equiv P', Q \equiv Q')
+\end{align*}
+\caption{End-Point Projection: Merging Rules}
+\label{Logic4Struct:figure:EPP-merging}
+\end{myfigure}
+\end{definition}
+
+\section{End Point Projection: Thread Projection}
+\label{Logic4Struct:appendix:EPP-thread-proj}
+
+\begin{definition}[Thread Projection]\label{Logic4Struct:def:tp}\rm 
+  Given a consistently annotation $\mathcal{A}$, the
+  partial operation $\tp{\mathcal{A}}{t}$ is defined as:
+  {\small \begin{itemize}
+\item[]
+    $\tp{\init {A^{t_1}}{B^{t_2}}{b}{\tilde k}\pfx\mathcal A}{t}
+    \DEFEQ$
+$  \quad  \left\{ 
+      \begin{array}{ll}
+        \initOut{b}{\tilde k}\pfx\tp{\mathcal A}{t_1}
+        &         
+        \textrm{if}\ t=t_1\\
+        \repInitIn{b}{\tilde k}\pfx\tp{\mathcal A}{t_2}
+        & 
+        \textrm{if}\ t=t_2\\
+        \tp{\mathcal A}{t}
+        & 
+        \text{otherwise}
+      \end{array}
+    \right.
+$\\\\
+
+\item[] $\tp{\interact {A^{t_1}}{B^{t_2}}{k}{e}{x} \pfx\mathcal  A}{t}
+    \DEFEQ$
+$\quad\left\{ 
+      \begin{array}{ll}
+        \outputP k {e}\pfx\tp{\mathcal A}{t}
+       &                 \textrm{if}\ t=t_1
+\\
+        \inputP k {x}\pfx\tp{\mathcal A}{t}
+        & 
+        \textrm{if}\ t=t_2\\
+        \tp{\mathcal A}{t}
+        & 
+        \text{otherwise}
+      \end{array}
+    \right.
+$\\\\
+%  \end{displaymath}
+%  \begin{displaymath}
+\item[] $\tp{\choice {A^{t_1}}{B^{t_2}}{k}{l}{\CAL{A}}}{t}
+    \DEFEQ$
+$\quad\left\{ 
+      \begin{array}{ll}
+        \selection {k} {l_i}\tp{\mathcal A_i}{t}
+       &                 \textrm{if}\ t=t_1
+\\
+        \branching k {\sum_i l_i}\pfx\tp{\mathcal A_i}{t}
+        & 
+        \textrm{if}\ t=t_2\\
+        \tp{\mathcal A}{t}
+        & 
+        \text{otherwise}
+      \end{array}
+    \right.
+$\\\\
+
+\item[]     
+$\tp{\itn{e@A^{t'}}{\mathcal A_1}{\mathcal A_2}}{t}
+    \DEFEQ$
+$\quad    \left\{ 
+      \begin{array}{ll}
+        \itn{e}{\tp{\mathcal A_1}{t'}}{\tp{\mathcal A_2}{t'}}
+        &         
+        \textrm{if}\ t=t'\\
+        \tp{\mathcal A_1}{t}\merge\tp{\mathcal A_2}{t}
+        & 
+        \text{otherwise}
+      \end{array}
+    \right.
+$\\
+%  \end{displaymath}
+%  \begin{displaymath}
+% \item[] 
+%     $\tp{x@A^{t'}:=e\pfx\mathcal  A}{t}
+%     \DEFEQ$
+% $\quad    \left\{ 
+%       \begin{array}{ll}
+%         x:=e\pfx\tp{\mathcal  A}{t'}
+%         &         
+%         \textrm{if}\ t=t'\\
+%         \tp{\mathcal A}{t}
+%         & 
+%         \text{otherwise}
+%       \end{array}
+%     \right.
+%  $\\
+
+% \item[] 
+% $\tp{\mathcal A_1+^{t'}\mathcal A_2}{t}
+%     \DEFEQ$
+% $\quad\left\{ 
+%       \begin{array}{ll}
+%         \tp{\mathcal A_1}{t'}\oplus\tp{\mathcal A_2}{t'}
+%         &         
+%         \textrm{if}\ t=t'\\
+%         \tp{\mathcal A_1}{t}\merge\tp{\mathcal A_2}{t}
+%         & 
+%         \text{otherwise}
+%       \end{array}
+%     \right.
+% $\\
+
+\item[] $\tp{\mathcal A_1 |^{t'}\mathcal A_2}{t} \DEFEQ
+  \tp{\mathcal A_1}{t'}\pp\tp{\mathcal A_2}{t'} $\\
+
+%  \end{displaymath}
+%  \begin{displaymath}
+% \item 
+%     $\tp{{\mathcal A_1}+^{t'}{\mathcal A_2}}{t}
+%     \DEFEQ$
+
+% $    \left\{ 
+%       \begin{array}{ll}
+%         \tp{\mathcal A_1}{t'}\oplus\tp{\mathcal A_2}{t'}
+%         &         
+%         \textrm{if}\ t=t'\\
+%         \tp{\mathcal A_1}{t}\merge\tp{\mathcal A_2}{t}
+%         & 
+%         \text{otherwise}
+%       \end{array}
+%     \right.
+% $
+%  \end{displaymath}
+
+\item[] 
+  $\tp{\rec^{t':\ASET{\VEC{t_i}}} X^A\pfx\mathcal A}{t}
+  \DEFEQ\rec X\pfx\tp{\mathcal A}{t}$ if
+  $t\in\ASET{\VEC{t_i}}$, $\tp{\mathcal A}{t}$ otherwise.\\
+\item[] 
+  $\tp{X^A_{t:\ASET{\VEC{t_i}}}}{t}
+  \DEFEQ X$ if $t\in\ASET{\VEC{t_i}}$, $\INACT$ otherwise.\\
+\item[]
+  $\tp{\INACT}{t}                                           
+  \DEFEQ  \INACT$.
+\end{itemize}
+If $\tp{\mathcal{A}}{t}$ is undefined then we set
+$\tp{\mathcal{A}}{t}=\perp$.}
+\end{definition}
+
+Above, we augment consistent annotations with a further annotation for
+recursions $\rec^{t:\{t_i\}} X$
+% $\rec^t X^A.\mathcal A$
+ and recursion variables $X^A
+_{t:\{t_i\}}$, with  
+% $\rec^t X^A.\mathcal A$ in an annotated interaction, let
+ $\{t_i\}$ be the set of threads occurring in,
+but not initiated in, $\CAL{A}$ (a thread is initiated in $\CAL{A}$
+whenever it occurs passive in a session initiation). 
+% Then, we further annotate this recursion as $\rec^{t:\{t_i\}} X$
+% and each free $X^A$ in $\mathcal A$ as $X^A _{t:\{t_i\}}$. 
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "../Thesis"
+%%% End: 

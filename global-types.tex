@@ -1,0 +1,163 @@
+
+\subsection{Session Types for the Global Calculus}
+\label{Logic4Struct-GlobalTypes}
+
+The Global Calculus comes accompanied wth a type discipline that
+ensures the proper control flow among interactions. It is built as a
+generalisation of session types \cite{honda1998lpa} for global
+interactions, first presented in \cite{carbone7scc}.  Here we
+informally describe
+their use through examples, and direct the reader  to their original presentation for
+a more formal view. 
+
+Session types in
+GC are used to structure sequence of message exchanges in a session.
+Their syntax is as follows:
+\begin{align}\label{Logic4Struct:eq:sessiontypes}
+  \theta =& ~~\mathtt{bool} ~|~ \mathtt{ int}  ~|~ \ldots  \notag\\
+  \alpha = & ~~
+  \uparrow(\theta).\alpha
+  ~|~
+  \downarrow(\theta).\alpha
+  ~|~
+  \&\{ l_i: \alpha_i\}_{i\in{I}}
+  ~|~ \oplus\{ l_i: \alpha_i\}_{i\in{I}}  ~|~ \alpha_1 \pp \alpha_2 ~|~ \endT ~|~ \mu \mathbf{
+    t }\pfx \alpha ~|~  \mathbf{ t }
+\end{align}
+
+Here, $\theta$ range over standard data types $\mathtt{bool, string, int,
+  \dots}$ and $\alpha$ describe session types.  We describe the forms
+of $\alpha$. 
+% The first four types are associated with the various
+% communication operations:
+\begin{itemize}
+\item $\downarrow(\theta).\alpha$ and $\uparrow(\theta).\alpha$ are
+  the input and output types and describe the reception (resp.
+  emission) of a message with data type $\theta$ followed by a
+  continuation $\alpha$.
+\item Similarly, $\&\{ l_i: \alpha_i\}_{i\in{I}}$ is the branching
+  type while $\oplus\{ l_i: \alpha_i\}_{i\in{I}}$ is the selection
+  type.
+ \item The type $\alpha_1 \pp \alpha_2$ is a parallel composition of
+   session types $\alpha_1$ and $\alpha_2$. 
+\item The type $\endT$ indicates session termination and is often
+  omitted.
+\item $\mu \mathbf{t} \pfx \alpha$ indicates a recursive type with
+  $\mathbf{t}$ as a type variable. $\mu \mathbf{t} \pfx \alpha$ binds
+  the free occurrences of $\mathbf{t}$ in $\alpha$. We take an
+  \emph{equi-recursive} view of types, not distinguishing between $\mu
+  \mathbf{t} \pfx \alpha$ and its unfolding $\alpha [\mu \mathbf{t}
+  \pfx \alpha / \mathbf{t}]$.
+\end{itemize}
+
+Typing judgments in GC have the form $\typerule{\typeEnv}{}{\chor \ccc
+  \Delta}$, where $\typeEnv$ is a type environment describing
+\emph{services},  and $\Delta$  the type environment describing 
+\emph{sessions}. Typically, $\typeEnv$
+contains a set of type assignments of the form $a@A: \alpha$, which
+say that a service $a$ located at participant $A$ may be invoked and
+run a session according to type $\alpha$. $\Delta$ contains type
+assignments of the form $k[A,B]: \alpha$ which say that a session
+channel $k$ identifies a session between participants $A$ and $B$ and
+has session type $\alpha$ when seen from the viewpoint of
+$A$. There is no particular reason why one has to choose a
+  strict direction when considering interactions, and one may as well
+  consider $k[A,B]: \alpha$ from the viewpoint of $B$. We return to
+the specification (\ref{Logic4Struct:example:syntax}) in
+Example~\ref{Logic4Struct:ex:onlinebooking}
+  to see how some of the typing rules work.  One possible assignment
+  for $\Delta$ is:
+
+ \begin{equation*}
+       k_1, k_2 [Cust, AC]: k_1 \downarrow
+       \text{booking}(\mathtt{string}) \pfx k_2 \uparrow
+       \text{offer}(\mathtt{int}) \pfx k_1 \downarrow \text{accept}(\mathtt{string}) \pfx \endT 
+\end{equation*}
+
+Describing that $k_1$ and $k_2$ are names corresponding to the same
+session between participants $Cust$ and $AC$, and corresponds to the
+session type $\alpha = k_1 \downarrow
+       \text{booking}(\mathtt{string}) \pfx k_2 \uparrow
+       \text{offer}(\mathtt{int}) \pfx k_1 \downarrow
+       \text{accept}(\mathtt{string}) \pfx \endT $ when seeing it from the
+       point of view of $Cust$.
+
+%  \begin{equation*}
+%    \text{ob}@\text{AC}:(k_1,k_2) \pfx k_1 \downarrow
+%     \text{booking}(\mathtt{string}) \pfx k_2 \uparrow
+%     \text{offer}(\mathtt{int}) \pfx k_1 \downarrow \text{accept}
+%     (\mathtt{int}) \pfx \endT \, .
+% \end{equation*}
+% the service type of
+%   the airline company at channel $ob$ can be described as:
+
+
+We provide some examples of the typing rules for the GC.
+The full set of
+typing rules derived from the original work are attached in Appendix
+\ref{Logic4Struct:appendix:global:typing}.
+First, we comment the rule \Did{G-TInit}, which types the establishment of a
+new session between two participants. 
+\begin{align*}
+\myrule{    G-TInit}
+    { \typerule{\typeEnv, a@B : (\vec{k})\alpha  }{}{
+        \chor  \ccc \Delta \cdot \vec{k}[B,A]: \alpha \quad A \neq B} } { \typerule{\typeEnv, a@B : (\vec{k})\alpha  }{}{
+        \init{A}{B}{a}{\vec{k}}\pfx \chor  \ccc \Delta}}
+\end{align*} 
+
+Here, the typing rule dictates some requirements on the structure of
+the choreography: first, the initialisation of a session between
+participants in $\init{A}{B}{a}{\vec{k}}\pfx \chor$ requires that 
+sessions names in $\vec{k}$ correspond to a session type in the
+premise. Moreover, it checks that the service channel $a@B :
+(\vec{k})\alpha$ is declared in the service typing $\typeEnv$.
+The rule $\Did{G-TCom}$ describes communication between
+participants: 
+
+\begin{align*}
+    \myrule{    G-TCom}
+    { \typerule{\typeEnv  }{}{
+        \chor   \ccc \Delta \cdot \vec{k} [A,B] :\alpha}
+      \quad \typerule{\typeEnv}{}{e@A:\theta}
+      \quad \typerule{\typeEnv}{}{x@B:\theta}
+      \quad k \in \vec{k}
+      \quad A \neq B 
+    } { \typerule{\typeEnv  }{}{
+        \interact{A}{B}{k}{e}{x} \pfx \chor \ccc \Delta \cdot
+        \vec{k}[A,B]: k \uparrow \theta \pfx \alpha}}
+\end{align*}
+
+Here, the interaction $ \chor = \interact{A}{B}{k}{e}{x} \pfx \chor'$
+will be 
+typable with a session type $\Delta \cdot
+        \vec{k}[A,B]: k \uparrow \theta \pfx \alpha $ provided that:
+        1) The evaluation of the expression $e$ at $A$ and its
+        recipient variable $x$ at $B$ correspond to the same value
+        type, 2) the communication is performed between different
+        participants $A$ and $B$, and 3) the continuation
+        $\chor$ contains a session type  between $A$ and $B$ such
+        that its session names in $\vec{k}$ contain $k$. In the
+        conclusion, we use an output type $k \uparrow \theta \pfx
+        \alpha$ describing the emission of value from the point of view
+        of $A$. It is clear, that we could use a complementary rule to
+        type the input of values from the point of view of $B$.
+
+
+
+
+
+\begin{assumption}[Well-typedness]
+Henceforth we only consider well-typed terms for the Global calculus,
+unless otherwise specified.  
+% We hereafter assume In the sequel, we only consider choreographies that satisfy the
+%   typing discipline.
+\end{assumption}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "../Thesis"
+%%% End: 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

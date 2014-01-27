@@ -1,0 +1,154 @@
+\section{Conclusion and Related Work}
+\label{Logic4Struct:sec:conclusion}
+% \CommentHugo{Fixme: Adapt the following conclusion to the full
+%   framework, and connect the research as the foundation of model
+%   checking of structured communications}
+
+This ongoing work aims at establishing the relations between imperative and declarative views of structured
+communications, and it  constitutes just the first step towards a
+verification framework for communication-centred programs. Summarising,
+this work argues that one can have more flexible specifications in a declarative
+(logical) of communication-centred programs than in an
+imperative one, and it presents ways of verifying the correspondence
+of imperative views with respect to their declarative ones, in terms of
+proof systems for each of the levels of abstraction here considered
+(choreographies and end-points). Similarly, we establish a connection
+between the methodology used for describing communication-centred
+programs imperatively (the end-point projection) and a logical
+projection between logics, and prove that the end-points generated
+from a global specification comply with the projections of global
+formulae in the local logic. Some further development of the ideas
+here exposed involve the proof about the completeness of \LL along the same lines as that for \GL, and exploring the termination of the
+proof checking algorithm. These results will pave the way for an approach to verifying structured communications, and one foresees further
+implementation of model checking techniques where the connections
+between declarative and imperative specifications can be exploited.
+
+
+
+
+Our work has led to further questions concerning the appropriate set
+of operators to be included in a logic for structured
+communications. In this document we explored derivations of
+Hennessy-Milner Logics, where the main properties of interest involved
+action and may formulae both at the level of choreographies and
+end-points. The may operator provides important information about the
+existence of an evolution where a property is fulfilled, but sometimes
+it can fall short of this  by allowing other evolutions of the system that do
+not comply to the property. In \cite{Carbone2011Open-Mixed-Refi} we
+started studies on stronger versions of the may modality, where one is
+allowed to express that a property is fulfilled in all possible
+executions in an eventual state, and their implementation as part of
+the operators in \GL is foresee.  Other improvements to the logics
+proposed include the use of fixed points, essential for describing
+state-changing loops, and auxiliary axioms describing structural
+properties of a choreography.
+
+
+
+\paragraph{Related Work}
+The connections between logics and session types have been explored in
+different works. Here we comment on some of the most representative
+exponents, namely \cite{CD08, caires2010session,
+  Bocchi2010A-theory-of-des,gordon2009principles,Berger2008Completeness-an}.
+In \cite{CD08}, a calculus combining notions of concurrent constraint
+programming and name passing is proposed. The resulting calculus
+treats sessions as constraint formulae representing the requirements
+to be satisfied in a client-server communication, using an approach similar to that of the CC-Pi calculus. As communications are
+represented as constraints, the type discipline takes the relationship
+between processes and constraints into account and guarantees that 
+processes and constraints are related, guaranteeing that
+communications follow a structured communication as in
+\cite{honda1998lpa}.
+
+The relationship between session types and linear logics has been
+explored in \cite{caires2010session}, where the authors establish a
+bidirectional correspondence between the session types and (dual)
+intuitionistic linear logic formulae. The correspondence is tight, and
+relates the existence of a simulation between reductions in session
+types and proof reductions in dual intuitionistic
+linear logic, and vice versa.  In \cite{Perez2012Linear-Logical-}, the
+authors make use of the linear logic interpretation of session types
+to describe a theory of logical relations for session types, allowing
+one to study properties like termination of well-typed interactions,
+and behavioural characterisations of session-typed isomorphisms as
+linear logic equivalences.
+
+Type and effect systems have been used to study structured
+communications. In \cite{gordon2003typing}, the \mipi- calculus is
+extended with labelled assertions describing progress in their
+communication steps. Assertions have complementary operations, and one
+can ensure that the communication is safe if all specified assertions
+have their correspondent begin-end operations present in the run of a
+protocol. In \cite{bonelli2005correspondence}, the theory of session
+types with correspondence assertions is studied, providing stronger
+guarantees for session types, in the sense that correspondence
+assertions allow one to keep track of the changes on the data
+transmitted over sessions and the way data is propagated across
+multiple parties.
+
+
+Relations between types and logics can also give more information
+about the nature of structured communications. In
+\cite{Bocchi2010A-theory-of-des}, authors proposed the integration of
+typed-based signatures with logical predicates as a method to
+guarantee finer grained properties about the information in transit in
+structured interactions. The proposed a methodology (\emph{Design by
+  contract}), constitutes an extension of multiparty session types
+\cite{DBLP:conf/popl/HondaYC08} with global assertions, describing
+global constraints on processes' interactions in terms of predicate
+logic formulae. In this way, types not only describe causal relations
+between the inter-process communications, but they also fulfil
+constraints regarding the values in transit.
+
+In \cite{Berger2008Completeness-an}, a proof system characterising
+May/Must testing pre-orders and bisimilarities over typed
+\mipi-calculus processes is presented. The connection between types
+and logics in this system comes in handy to restrict the shape of the
+processes one might be interested, allowing us to consider such work
+as a suitable proof system for calculi describing the communication of
+end points.
+
+In the context of security, the work on F7 \cite{gordon2009principles} has explored the
+integration of dependent and refinement types in a suite of functional
+programming languages, with the aim of statically checking assertions
+about data and state, in order to enforce security policies.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Places 2010 Version
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% \section{Future work}
+
+% \label{Logic4Struct:sec:futurework}
+
+
+% The work here presented constitutes just the first from the initial
+% steps towards a verification framework of structured
+% communications. Our main concerns relate to (i) establish a
+% completeness relation between the choreography logic and its proof
+% system, (ii) the ability of integrate the proof system here presented
+% with other logical frameworks for the specification of sessions, and
+% (iii) the ability of reasoning about partial information within the
+% framework. In \cite{Berger2008Completeness-an}, Berger et
+% al. presented proof systems characterizing May/Must testing preorders
+% and bisimilarities over typed \mipi-calculus processes. The connection
+% between types and logics in such system comes in handy to restrict the
+% shape of the processes one might be interested, allowing us to
+% consider such work as a suitable proof system for the calculus of end
+% points. Moreover, a connection between the global logic here presented
+% and the modal logic used in typed \mipi-specifications results
+% necessary, allowing us to project a property satisfied in a
+% choreography into sets of properties in \mipi-calculus
+% specifications. Other improvements to the system proposed include the
+% use of fixed points, essential for describing state-changing loops,
+% and auxiliary axioms describing not only structural properties of a
+% choreography, but also expected results given by the interaction of
+% one or more choreographies.
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "../Thesis"
+%%% End: 

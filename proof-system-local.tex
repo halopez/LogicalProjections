@@ -1,0 +1,346 @@
+\subsection{\texorpdfstring{\LL}{LL} : Proof System}
+
+
+Similarly to \GL, \LL is equipped with an inference system to deduce
+whether an end point $\network$ respects a given formula $\psi$. We
+write $ \network |- \psi $ for the provability judgement where
+$\network$ is a network and $\psi$ is a formula in \LL.
+
+\begin{definition}[Exhibition - End Points]
+  We say that a network $\network$ \emph{exhibits} a formula $\psi$,
+  written $\network |- \psi$, iff the assertion $\network |- \psi$ has
+  a proof in the proof system given in
+  Figure~\ref{Logic4Struct:table:Local:proofSys}.
+\end{definition}
+
+
+\begin{myfigure}{t}
+  \begin{align*}
+    &
+    \myruleg{L.P_{init-out}}{\typerule{A[P]_\sigma}{}{\psi}}
+    {\typerule{A[ \initOut{a}{k} \pfx P ]_\sigma }
+      {}{\locatedActionF{A}{\asynchServiceOutF{a}{k} } \pfx \psi}}
+   ~
+    \myruleg{L.P_{init-in}}{\typerule{A[P]_\sigma}{}{\psi}}
+    {\typerule{A[ \repInitIn{a}{k} \pfx P ]_\sigma }
+      {}{\locatedActionF{A}{\asynchServiceInputF{a}{k} } \pfx \psi}} 
+    ~
+    \myruleg{L.P_{may1}}{ \typerule{\network}{}{\psi}}
+    {\typerule{ \network }{}{\may \psi}}
+  ~
+    \myruleg{L.P_{may2}}{ \typerule{\network}{}{\psi \lor \nextOp \may \psi}}
+    {\typerule{ \network }{}{\may \psi}}
+   \\[1mm]
+    &
+    \myruleg{L.P_{bra}}{\typerule{\forall i\in I.\ A[P_i]_\sigma}{}{\psi_i}}
+    {\typerule{  A [\branching{k}{\sum_i \mathsf{l_i} \pfx
+          P_i}] }{}{\bigwedge_{i\in I}
+        \locatedActionF{A}{\asynchBranch{k}{l_i}} \pfx \psi_i}}
+    ~
+    \myruleg{L.P_{sel}}{\typerule{ A[P]_\sigma }{}{\psi}}
+    {\typerule{  A [\selection{k}{ \mathsf{l} } P] }{}{
+        \locatedActionF{A}{\asynchSelection{k}{l}} \pfx \psi}}
+    ~
+        \myruleg{L.P_{end}}{ }
+    {\typerule{ \INACT }{}{\endF}}
+  \\[1mm]
+    &
+    \myruleg{L.P_{send}}{
+      \typerule{A[P]_\sigma}{}{\psi}
+    }
+    {\typerule{ 
+        A[ \outputP{k}{x} \pfx P ]_\sigma }
+      {}{ \locatedActionF{A}{\asynchOutputF{k}{x}} \pfx \psi}}
+    ~
+    \myruleg{L.P_{rcv}}{
+      \typerule{A[P]_\sigma}{}{\psi}
+    }
+    {\typerule{ 
+        A[ \inputP{k}{x} \pfx P ]_\sigma }
+      {}{ \locatedActionF{A}{\asynchInputF{k}{x}} \pfx \psi}}
+    ~
+%     \myruleg{P_{or1}}{\typerule{\network}{}{\psi_1} }
+%     {\typerule{\network}{}{\psi_1 \lor \psi_2}}
+%     ~
+    \myruleg{L.P_{and}}{\typerule{\network}{}{\psi_1} \quad \typerule{\network}{}{\psi_2}}
+    {\typerule{\network}{}{\psi_1 \land \psi_2}}
+  \\[1mm]
+    &
+    \myruleg{L.P_{exp}}{\network \equiv A[P]_\sigma ~~ \sigma(e_1) \Downarrow v ~~ \sigma(e_2) \Downarrow v}
+    {\typerule{\network}{}{ (e_1 = e_2)@A }}
+    ~
+    \myruleg{L.P_{struct}}{\typerule{\network}{}{\psi} \quad \network\equiv \network '}
+    {\typerule{\network '}{}{\psi}}
+%     ~
+%     \myruleg{P_{or2}}{\typerule{\network}{}{\psi_2} }
+%     {\typerule{\network}{}{\psi_1 \lor \psi_2}}
+    ~
+    \myruleg{L.P_{neg}}{ \network \not |- \psi }
+    {\typerule{\network}{}{ \lnot \psi}}
+  \\[1mm]
+    &
+    \myruleg{L.P_{ifT}}{\sigma(e) \Downarrow \true \quad
+      \typerule{A[P_1]_\sigma}{}{\psi}}
+    {\typerule{ A[\itn {e}{P_1}{P_2}]_\sigma }{}{\psi}}
+    ~
+    \myruleg{L.P_{ifF}}{\sigma(e) \Downarrow \false \quad
+      \typerule{A[P_2]_\sigma}{}{\psi}}
+    {\typerule{ A[\itn {e}{P_1}{P_2}]_\sigma }{}{\psi}}
+    ~
+    \myruleg{L.P_{par}}{\typerule{\network_1}{}{\psi_1} \quad
+      \typerule{\network_2}{}{\psi_2}}
+    {\typerule{\network_1 \pp \network_2}{}{ \psi_1 \pp \psi_2}}
+   \\[1mm]
+    &
+    \myruleg{L.P_{\exists}}{\exists  w\in fn(\network) \cup \{k\}.\
+      \typerule{\network}{}{\psi[w/\var]} ~\text{ $k$ fresh}}
+    {\typerule{\network}{}{\exists \var \pfx \psi}}
+    ~
+    \myruleg{L.P_{oplus1}}{\typerule{A[P_1]_\sigma}{}{\psi} }
+    {\typerule{ A[ P_1 \oplus P_2 ]_\sigma}{}{\psi}}
+    ~
+    \myruleg{L.P_{oplus2}}{\typerule{A[P_2]_\sigma}{}{\psi} }
+    {\typerule{ A[P_1 \oplus P_2 ]_\sigma}{}{\psi}}
+%     ~
+%     \myruleg{P_{rest}}{\typerule{ \network}{}{\psi} ~~ x \text{ is fresh }}
+%     {\typerule{ \new{x} \pfx \network }{}{\new{x} \pfx \psi}}
+\\[1mm]
+&
+%     \myruleg{L.P_{synch}}{\network \equiv M \pp M' ~~ \typerule{M}{}{
+%         \locatedActionF{A}{\asynchOutputF{s}{k}}} \pfx \psi ~~ \typerule{M'}{}{
+%         \locatedActionF{B}{\asynchInputF{s}{k}}} \pfx \omega}  
+%     {\typerule{ \network }{}{\psi [\tau] \omega}}
+%     ~
+% \\[1mm]
+% &
+%     \myruleg{L.P_{synch-k}}{\network \equiv M \pp M' ~~ \typerule{M}{}{
+%         \locatedActionF{A}{\asynchServiceOutF{s}{k}}} \pfx \psi ~~ \typerule{M'}{}{
+%         \locatedActionF{B}{\asynchServiceInputF{s}{k}}} \pfx \omega}  
+%     {\typerule{ \network }{}{\psi [\tau_k] \omega}}
+%     ~
+   % &
+    % \myruleg{P_{var}}{ \mathbf{-} } {\typerule{ X }{}{\phi}}
+    % \qquad
+    % \myruleg{P_{rec}}{\typerule{C\MSUBS{\mu X.C}{X}}{}{\phi} }
+    % {\typerule{ \mu X\pfx C }{}{ \phi }}
+ \end{align*}
+ \caption{Proof system for the End Point Calculus.}
+ \label{Logic4Struct:table:Local:proofSys}
+\end{myfigure}
+Let us now describe some of the inference rules of the proof system.
+The rule $\mathsf{L.P_{end}}$ relates the inaction terms with the
+termination formula. The rules $\mathsf{L.P_{and}}$ and
+$\mathsf{L.P_{neg}}$ denote rules for conjunction and negation in
+classical logic, respectively. The rule for parallel composition is
+represented in $\mathsf{L.P_{par}}$; it does not indicate the behaviour
+of a given end-point, but relates interacting end-points with their
+corresponding formulae: $\mathsf{L.P_{par}}$ juxtaposes the behaviour of two
+processes and combines their respective formulae by the use of a
+separation operator. The correspondence between a network and a may
+formula is given by a formula relating each of the possible labels it
+can contain.: 
+$\mathsf{L.P_{bra}}$ can be explained as follows: suppose we are given a
+process $\network = \pr{A}{\branching{s}{\Sigma_{i} l_i} \pfx P_i}{\sigma}$, a set of branch labels
+$\{l_i \, | \, i \in I\} $ (determined by typing) and we are given a
+proof that each $\pr{A}{\sigma}{P_i}$ satisfies $\psi_i$, then we certainly have a
+proof saying that every derivation of $\network$ should satisfy a guard $l_i$
+followed by a formula $\psi_i$. 
+$\mathsf{L.P_{init-out}}$ and $\mathsf{L.P_{init-in}}$
+describe the session initiation formulae, $\mathsf{L.P_{bra}}$ and
+$\mathsf{L.P_{sel}}$ describe label branching and selection, and
+$\mathsf{L.P_{rcv}}$ and $\mathsf{L.P_{send}}$ data communication. 
+ Similarly,
+the rule
+$\mathsf{P_\exists}$ says that in order to satisfy an $\exists t\pfx
+\psi$, it is sufficient to find a value $w$ for $t$ in the free names
+used by the network $\network$ or in the free names used by the
+formula $\psi$. Rule $\mathsf{P_{exp}}$ denotes
+evaluation of local  expressions.
+As can be noted by $\mathsf{L.P_{may1}}$ and
+$\mathsf{L.P_{may2}}$, the proof system encodes the eventual operator as
+the unfolding recursion of $<<>> \psi$. 
+$\mathsf{P_{struct}}$ proves
+that processes that are structurally congruent bear correspondence
+with the same logical formula. Conditional and internal choice rules
+$\mathsf{L.P_{ifT}}$, $\mathsf{L.P_{ifF}}$, $\mathsf{L.P_{oplus1}}$
+and $\mathsf{L.P_{oplus2}}$ are also standard. 
+
+
+% \CommentHugo{Fixme: Do something with the rules in
+%   $\mathsf{L.P_{synch}, L.P_{synch-k}}$, originally we introduced them
+%   to reason about synchronization within networks, but now they are
+%   not included in \LL, although they seem a bit important for this
+%   setting. Marco, what do you think?} 
+
+
+
+\begin{theorem}[Soundness]\label{Logic4Struct:thm:LL:soundness}
+  For any 
+  recursion-free network \network, and every formula $\psi$, if $
+  \network |- \psi$  then $ \network |= \psi$.
+\end{theorem}
+\begin{proof}
+  It follows by induction on the derivation of $|-$.
+ \begin{description}
+
+  \item[Case $\mathsf{P_{end}}$:] trivial.
+
+  \item[Case $\mathsf{L.P_{init-out}}$:] We have that $\network =
+    \pr{A}{\initOut{a}{k} \pfx P}{\sigma} $ and $\network |-
+    \locatedActionF{A}{ \asynchServiceOutF{a}{k}} \pfx \psi$. By
+    $\mathsf{L.P_{init-out}}$, we have that $\pr{A}{P}{\sigma} |-
+    \psi$. From induction hypothesis we get that $\pr{A}{P}{\sigma} |=
+    \psi$. We have to show that  $\pr{A}{\initOut{a}{k} \pfx
+      P}{\sigma}   |= \locatedActionF{A}{ \asynchServiceOutF{a}{k}}
+    \pfx \psi$. From the assertion semantics, we have that $\network' |=
+    \locatedActionF{A}{\asynchServiceOutF{a}{k}} \pfx \psi$ iff
+    $\network' \equiv \pr{A}{Q}{\sigma} \pp M \land \exists
+    R,\sigma'. \pr{A}{Q}{\sigma} \action{\asynchServiceOutF{a}{k}}
+    \pr{A}{R}{\sigma'} \land \pr{A}{R}{\sigma'} \pp M |= \psi$, which
+    holds immediately from the selection of $Q = \initOut{a}{k} \pfx P$
+    and the induction hypothesis.
+
+    \item[Cases $\mathsf{L.P_{init-in}}, \mathsf{L.P_{bra}},
+      \mathsf{L.P_{sel}}, \mathsf{L.P_{send}}, \mathsf{L.P_{rcv}}$:]
+      Analogous to case $\mathsf{L.P_{init-out}}$.
+
+  \item[Case $\mathsf{L.P_{par}}$:] We have that $\network  =
+    \network_1 \pp \network_2$ and $\network |- \psi_1
+    ~\pp~ \psi_2$ and by $\mathsf{L.P_{par}}$ we know that $\network_1
+    |- \psi_1$ and $\network_2 |- \psi_2$. From the induction
+    hypothesis we know that $\network_1 |= \psi_1$ and $\network_2 |=
+    \psi_2$. We have to show $\network |= \psi_1 \pp \psi_2$, which
+    follows directly from the assertion semantics for $\psi_1 \pp
+    \psi_2$ and the induction hypothesis.
+
+    \item[Cases $\mathsf{L.P_{and}}$, $\mathsf{L.P_{exp}}$:] Analogous to
+      $\mathsf{P_{par}}$.
+
+
+    \item[Case $\mathsf{L.P_{neg}}$:] We have that $\network |- \lnot
+      \psi$, so by $\mathsf{L.P_{neg}}$ we get $\network \not |-
+      \psi$. By induction hypothesis we have that $\network \not
+      |= \psi$, which is necessary condition to deduce
+      $\network |= \lnot \psi$.
+
+
+  \item[Case $\mathsf{L.P_{\exists}}$:] We have that $\network |-
+    \exists t. \psi$ and by $\mathsf{L.P_{\exists}}$ we have that
+    $\exists w \in fn(\network) \cup \{ k \}$ and  $\network |-
+    \psi [w/t]$. By induction hypothesis we know that $\network |=
+    \psi [w/t]$. Take $w \in fn(\network)$ or a fresh name, then we know
+    that $\network |= \psi[w/t]$ with appropriate $w$, and then
+    $\network |= \exists t. \psi$ follows from the definition of
+    the assertion semantics. 
+
+
+
+%     \item[Case $\mathsf{P_{may}}$:] We have that $\chor |-_\sigma
+%       \may \phi$ and by $\mathsf{P_{may}}$ then $\chor' |-_{\sigma'}
+%       \phi$ and $(\sigma', \chor') \in $Reachable($\sigma,
+%       \chor$). From the induction hypothesis we have that $\chor'
+%       |=_{\sigma} \phi$, then we have to show that $\chor |=_\sigma
+%       \may \phi$. From the assertion semantics we know that $C
+%       |=_\sigma \may \phi \iff (\sigma, \chor') \action{} ^* (\sigma',
+%       \chor')$ and $\chor' |=_{\sigma'} \phi$, which holds immediately
+%       by the selection of $(\sigma', \chor') \in $Reachable($\sigma,
+%       \chor$) and the induction hypothesis.
+
+
+  \item[Case $\mathsf{L.P_{may1}}$:] We have that $\network |- \may
+    \psi$ and by $\mathsf{L.P_{may1}}$ then $\network |- \psi$. By
+    induction hypothesis we have $\network |= \psi$. We have to
+    show that $\network |= \may \psi$, which follows immediately
+    from $\psi => \may \psi$, so $\network |= \may \psi$.
+
+  \item[Case $\mathsf{L.P_{may2}}$:] We have that $\network |- \may
+    \psi$ and by $\mathsf{L.P_{may2}}$ then $\network |- \psi \lor \nextOp
+    \may \psi$. By induction hypothesis we have that $\network |=
+    \psi \lor \nextOp \may \psi$. We have to prove that $\network |= \may
+    \psi$. By definition of the assertion semantics, $\network |=
+    \may \psi$ iff $\network \action{ }^* M. \; M |= \psi $. We can
+    express $ \network \action{ }^*  M $ as a finite sequence of
+    transitions $\network \action{ }^n M$. We
+    have to show that there exists $0 \leq i \leq n$ such that
+    $\network \action{}^i \network' \action{}^j
+    M$ and $\network' |= \may \psi$. We
+    proceed by second induction on $j-i$:
+    
+    \begin{description}
+
+    \item[1. ($j-i = j$):] Then $ \network \action{}^0
+      \network' \action{}^n M$ and $M
+      |= \psi$, which is the same case than the one for
+      $\mathsf{L.P_{may1}}$, hence $N |= \may \psi$.
+
+        \item[2.($j-i=1$):] Then $\network \action{}^1 \network' \action{}^{n-1} M$ and $M
+          |= \psi$, so $\network |= \nextOp \may \psi$, then $\network |= \may  \psi$
+          holds true by direct application of the induction hypothesis.
+
+        \item[3.($ j-i = k \land 1 < k \leq n$):] Then we have 
+          that $ \network \action{}^i \network' \action{}^j M$ and $M
+          |= \psi$. By second inductive hypothesis we have that
+          $\network' |= \may \psi$. We can decompose
+          $\network \action{}^i \network'$ as:
+            \begin{equation}\label{Logic4Struct:eq::may2}
+              N \action{}^1 N''
+              \action{}^{i-1} N'
+            \end{equation}
+            The combination of the second inductive hypothesis and the
+            assertion semantics for equation
+            \ref{Logic4Struct:eq::may2} leads to $\network |= \nextOp \may
+            \may \psi$, which reduces to $\network |= \nextOp
+            \may \psi$ using standard formula equivalences from
+            LTL \cite{emerson1991temporal}.
+      \end{description}
+
+
+    \item[Case $\mathsf{L.P_{struct}}$:] It follows by direct
+      application of lemma \ref{Logic4Struct:lemma:StructuralSatisfiability-local}.
+
+    
+    \item[Case $\mathsf{L.P_{ifT}, L.P_{ifF}}$:] We take only the proof for
+    $\mathsf{L.P_{ifT}}$, the other works similarly.
+   
+    We have that $\network = \pr{A}{\itn{e}{P_1}{P_2}}{\sigma}$, by
+    $\mathsf{L.P_{ifT}}$ we have that $\sigma(e) \Downarrow \true $
+    and $\pr{A}{P_1}{\sigma} |- \psi$, and by induction hypothesis we have
+    that $\pr{A}{P_1}{\sigma} |= \psi$. 
+    We have to show that $\network |= \psi.$
+    Assume a $\sigma$ s.t. $\sigma ( e )
+    \Downarrow \true$ (The other case is symmetric),
+    from the assertion semantics, we get that $\network ' |= (e_1 =
+    e_2)@A$ iff $\network' \equiv \pr{A}{P}{\sigma}$ and $\sigma(e_1)
+    = \sigma(e_2)$, which holds true from Lemma
+    \ref{Logic4Struct:lemma:epp-equiv} and the induction hypothesis,
+    therefore $\network |= \psi$.
+%     Assume a $\sigma$ s.t. $\sigma ( e )
+%     \Downarrow \true$ (The other case is symmetric), and $P_1|=
+%     \psi$ referring to the property expressed in the transition
+%     $(\sigma, \chor_1) \action{\ell} (\sigma, \chor_1')$. Then from
+%     \Did{G-IfT} we know that $(\sigma, \chor) \action{\ell} (\sigma,
+%     \chor_1')$ and $\chor |=_\sigma \phi$, which is what we had to
+%     show.
+
+    \item[Case $\mathsf{L.P_{oplus1}}$, $\mathsf{L.P_{oplus2}}$: ]
+      It follows by direct application of lemma \ref{Logic4Struct:lemma:LL:implication}.
+ \end{description}
+\end{proof}
+
+% \CommentHugo{Fixme: Adapt the following theorems}
+
+% \begin{theorem}[Completeness]\label{Logic4Struct:thm:LL:completeness}
+%   For any 
+%   recursion-free network \network, and every formula $\psi$, if
+%   $\network |= \psi$   then $\network |- \psi$.
+% \end{theorem}
+
+
+
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "../Thesis"
+%%% End: 

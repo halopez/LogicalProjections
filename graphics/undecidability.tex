@@ -1,0 +1,179 @@
+\section{Undecidability of Global Logic} \label{logic4chor:sec:undecidability}
+%
+In this section we focus on the undecidability of the global logic for
+the global calculus with recursion given in
+Section~\ref{logic4chor:sec:globalCalc}.  In order to prove that the global logic
+is undecidable, we use a reduction from the Post Correspondence
+Problem (PCP)~\cite{Post:pcp} similarly to the one proposed in
+\cite{ct:csl01}. The idea is to encode in the global calculus a
+``program'' which simulates the construction of PCP.
+%
+We first give a formal definition of the PCP.  In the sequel, $\cdot$
+denotes word concatenation.
+%
+\begin{definition}[PCP]
+  Let $s,t,\ldots$ range over $\Sigma^*$ where $\Sigma = \{0, 1\}$ and
+  let $\epsilon$ be the empty word.  An instance of PCP is a set of
+  pairs of words $\{(s_1,t_1), \ldots, (s_n,t_n)\}$ over
+  $\Sigma^*\times\Sigma^*$.  The Post Correspondence Problem is to
+  find a sequence $i_0,i_1,\dots,i_k$ ($1 \leq i_j \leq n$ for all
+  $0\leq j \leq k$) such that $s_{i_0}\cdot \ldots \cdot s_{i_k} =
+  t_{i_0}\cdot \ldots \cdot t_{i_k}$.
+\end{definition}
+
+\NI Intuitively, PCP consists of finding some string in $\Sigma^*$
+which can be obtained by the concatenation $s_{i_0}\cdot \ldots \cdot
+s_{i_k}$ as well as by $t_{i_0}\cdot \ldots \cdot t_{i_k}$. Such a
+problem has been proved to be undecidable~\cite{Post:pcp}.
+%
+Our goal is to find a GC term that takes a random pair of words from
+an instance of PCP and append them to an ``incremental pair'' of words
+which encodes the current state of the sequences $s_{i_0}\cdot \ldots
+\cdot s_{i_k}$ and $t_{i_0}\cdot \ldots \cdot t_{i_k}$.  Technically,
+we need a choreography that assigns randomly a natural number in $\{1,
+\dots, n\}$ to a variable $r$ in some participant $B$, and another
+choreography that picks a pair of words from the PCP instance,
+accordingly to value in the variable $r@B$, and then appends them to
+the ``incremental pair'' of words in $A$.
+Formally, % We suggest the following
+% encoding:
+\begin{definition}[Encoding of PCP]\label{logic4chor:def:PCPencoding}
+
+  Let $A_1,\dots,A_n,A,B$ be participants and let $a,b$ be shared names for
+  sessions, then define the two choreographies as shown below:
+  \begin{align*}
+    &
+    \begin{array}{rcl}
+      \textsf{Random}(A_1,\dots,A_n,B,a) &
+      \DEFEQ &
+      \phantom{{}\pp\ {}}\mu X \pfx
+      \init{A_1}{B}{a}{k} \pfx
+      \interact{A_1}{B}{k}{1}{r} \pfx X\\[1mm]
+      &&
+      \pp\ \mu X \pfx
+      \init{A_2}{B}{a}{k} \pfx
+      \interact{A_2}{B}{k}{2}{r} \pfx X\\[1mm]
+      &&
+      \pp\ \ldots\\[1mm]
+      &&
+      \pp\ \mu X \pfx
+      \init{A_n}{B}{a}{k} \pfx
+      \interact{A_n}{B}{k}{n}{r} \pfx X
+      \end{array}
+\end{align*}
+\begin{align*}
+    &
+    \begin{array}{rcl}
+      \textsf{Append}(A,B,b) &
+      \DEFEQ &
+      \mu X\pfx
+      \init{A}{B}{b}{k} \pfx
+      \interact{A}{B}{k}{str1}{tmp1} \pfx
+      \interact{A}{B}{k}{str2}{tmp2} \pfx {} \\
+      &
+      &
+      \mathbf{if}\ r@B = 1\ \mathbf{then} \\
+      &
+      &
+      \quad
+      \interact{B}{A}{k}{tmp1 \cdot s_1}{str1} \pfx
+      \interact{B}{A}{k}{tmp2 \cdot t_1}{str2} \pfx X \\
+      &
+      &
+      \mathbf{else}\ \mathbf{if}\ r@B = 2\ \mathbf{then} \\
+      &
+      &
+      \quad
+      \interact{B}{A}{k}{tmp1 \cdot s_2}{str1} \pfx
+      \interact{B}{A}{k}{tmp2 \cdot t_2}{str2} \pfx X \\
+      &
+      &
+      \mathbf{else} \ \mathbf{if}\ r@B = 3\ \mathbf{then} \\
+      &
+      &
+      \qquad \vdots \\
+      &
+      &
+      \mathbf{else} \ \mathbf{if}\ r@B = n\ \mathbf{then} \\
+      &
+      &
+      \quad
+      \interact{B}{A}{k}{tmp1 \cdot s_n}{str1} \pfx
+      \interact{B}{A}{k}{tmp2 \cdot t_n}{str2} \pfx X \\
+      &
+      &
+      \mathbf{else }\ X
+    \end{array}
+  \end{align*}
+  We define the initial configuration $(\sigma,\chor)$ to be formed by
+  the choreography and the state below:
+  {\small
+  \begin{align*}
+    \chor & \DEFEQ
+    \textsf{Random}(A_1,\dots,A_n,B,a) \pp  \textsf{Append}(A,B,b) \\
+    \sigma & \DEFEQ
+    [str1@A \mapsto \epsilon,\ str2@A \mapsto \epsilon,\
+    tmp1@B \mapsto \epsilon,\ tmp2@B \mapsto \epsilon,\
+    r@B \mapsto 1] \, .
+  \end{align*}
+  }
+  For encoding the PCP existence question ($s_{i_0}\cdot \ldots \cdot
+  s_{i_k} = t_{i_0}\cdot \ldots \cdot t_{i_k}$) we can encode it as a
+  \GL formula:
+  {\small
+  \begin{equation*}
+    \phi \DEFEQ
+    <<>> \Big(
+    (str1@A = str2@A) \land
+    (str1@A \neq \epsilon) \land
+    (str2@A \neq \epsilon)
+    \Big) \, .
+  \end{equation*}
+  }
+\end{definition}
+\NI Above, each participant $A_i$ (with $i\in \{1,\dots,n\}$)
+recursively opens a session with participant $B$ and writes in the
+variable $r@B$ the value $i$. Moreover, the participant $B$ stores the
+knowledge of all the word pairs $(s_i,t_i)$, while the participant $A$
+takes randomly a word pair from $B$ and then append it to his
+incremental pair of words: $(str1,str2)$.  Next, the formula $\phi$
+states that there exists a computational path from the initial
+configuration to a configuration which stores in $str1$ and $str2$ two
+equal non-empty strings.
+
+\begin{theorem}
+  The global logic is undecidable on the global calculus with
+  recursion.
+\end{theorem}
+\begin{proof} 
+  (Sketch) The statement $\chor |=_\sigma \phi$ holds iff the encoded
+  PCP has a solution.  Indeed, if the initial configuration
+  $(\sigma,\chor)$ satisfies the formula $\phi$ then it means there
+  exists a configuration $(\sigma',\chor')$ where $(str1@A = str2@A)
+  \land (str1@A \neq \epsilon) \land (str2@A \neq \epsilon)$
+  holds. Hence, there is a sequence of $i_0,\dots,i_k$ such that $str1
+  = s_{i_0}\cdot \ldots \cdot s_{i_k} = t_{i_0}\cdot \ldots \cdot
+  t_{i_k} = str2$, that is, the instance of PCP has a solution.
+\end{proof}
+
+
+\begin{remark}\label{logic4chor:remark:vars}
+  The undecidability result presented in this section shows that the
+  global calculus is considerably expressive, despite the choreography
+  approach offers a simplification in the specification of concurrent
+  communicating systems as argued in \cite{carbone7scc}. The encoding
+  in Definition~\ref{logic4chor:def:PCPencoding} shows that allowing state
+  variables (hence local variables that can be accessed by various
+  threads) increases the expressive power of the language. Indeed, we
+  could just look at GC as a simple concurrent language with a
+  ``shared'' store where assignment to variables is just in-session
+  communication. In this view, we conjecture that removing variables
+  and focusing only on communication would make the logic decidable.
+\end{remark}
+% In the next sections, we discuss when and how to decide the global
+% logic formulae on a sub-calculus of the global calculus.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "main"
+%%% End: 
